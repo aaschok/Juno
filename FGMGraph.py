@@ -10,7 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 class FGMGraph():
     """Class for collecting FGM data from .csv files and plotting in variable time frames with cooresponding position.
         Input('Data folder path','Start time','End time','Meta kernel path','Polling rate of data')"""
-    def __init__(self,dataFolder,timeStart,timeEnd,metaKern,pollingRate = 1):
+    def __init__(self,dataFolder,timeStart,timeEnd,metaKern,pollingRate = None):
         self.dataFolder = dataFolder #The folder which contains all csv data files
         self.timeStart = timeStart
         self.timeEnd = timeEnd
@@ -22,7 +22,8 @@ class FGMGraph():
 
         spice.furnsh(self.meta)
 
-        polling = 'r' + str(self.pollingRate) + 's' #Put into the string format in which polling rate is expressed in the file name
+        if self.pollingRate is None:    pass
+        else:   polling = 'r' + str(self.pollingRate) + 's' #Put into the string format in which polling rate is expressed in the file name
 
         dateRangeTemp = (np.arange(utc[0][:10],np.datetime64(utc[1][:10]) + np.timedelta64(1,'D'),dtype='datetime64'))
         dateRangeDay = [spice.et2utc(spice.utc2et(str(x) + 'T00:00:00.000'),'ISOD',3,9) for x in dateRangeTemp] 
@@ -30,11 +31,23 @@ class FGMGraph():
         fileDict = {}
         dataDict = {} #A dictionary holding the data in each file sorted by date 
 
-        for i,filename in enumerate(os.listdir(dataFolder)):
-            for date in dateRangeDay:
-                if date[:4] in filename and date[5:] in filename and polling in filename and filename.endswith('.csv'):
-                    fileDict[date] = filename
-                    dataDict[date] = pd.read_csv(os.path.join(dataFolder, filename))
+        if self.pollingRate is None:
+            for i,filename in enumerate(os.listdir(dataFolder)):
+                for date in dateRangeDay:
+                    if date[:4] in filename and date[5:] in filename and filename.endswith('.csv') and 'r1s' not in filename and 'r60s' not in filename:
+                        fileDict[date] = filename
+                        dataDict[date] = pd.read_csv(os.path.join(dataFolder, filename))
+        
+        elif self.pollingRate is not None:
+            for i,filename in enumerate(os.listdir(dataFolder)):
+                for date in dateRangeDay:
+                    if date[:4] in filename and date[5:] in filename and filename.endswith('.csv') and polling in filename:
+                        fileDict[date] = filename
+                        dataDict[date] = pd.read_csv(os.path.join(dataFolder, filename))
+
+        if fileDict == {}:
+            print('No files with specified settings')
+            return
 
         posTimeData = []
         for date,data in dataDict.items(): #All data for each day is collected and plotted
@@ -92,7 +105,7 @@ if __name__ == '__main__':
     timeStart = '2017-03-09T00:00:00.000' #Starting time for analyzing data can be in any UTC format
     timeEnd = '2017-03-09T23:59:59.000'
     meta = "juno_2019_v03.tm" 
-    pollingRate  = 1 #Seconds
+    pollingRate  = 1 #Seconds can be 1, 60, or None
 
     timeDomain = 6 #Hours
     analyze = FGMGraph(dataFolder,timeStart,timeEnd,meta,pollingRate)
