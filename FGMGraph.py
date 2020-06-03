@@ -101,16 +101,16 @@ class FGMGraph():
 
 
 if __name__ == '__main__':
-    dataFolder = 'data\\magnetometer'
-    timeStart = '2017-03-09T00:00:00.000' #Starting time for analyzing data can be in any UTC format
-    timeEnd = '2017-03-09T23:59:59.000'
+    dataFolder = '..\\data\\fgm'
+    timeStart = '2019-09-09T00:00:00.000' #Starting time for analyzing data can be in any UTC format
+    timeEnd = '2019-09-14T23:59:59.000'
     meta = "juno_2019_v03.tm" 
     pollingRate  = 1 #Seconds can be 1, 60, or None
 
     timeDomain = 6 #Hours
     analyze = FGMGraph(dataFolder,timeStart,timeEnd,meta,pollingRate)
     analyze.Graph(timeDomain)
-
+    
 
 
 
