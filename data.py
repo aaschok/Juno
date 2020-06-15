@@ -3,15 +3,13 @@ import pandas as pd
 import os,datetime,logging,pathlib
 import matplotlib.pyplot as plt
 
-logging.basicConfig(filename='DataGraph.log',filemode='w',level=logging.DEBUG)
-
 class PDS3Label():
     """Class for reading and parsing PDS3 labels, this will only work with labels that contain the comma seperated commant keys "/*RJW,...*/"""
     def __init__(self,labelFile):
         self.label = labelFile
-        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA_UNITS','DATA','DIM1_E'] #All the data names you want to find info on from the .lbl file
+        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA','DIM1_E'] #All the data names you want to find info on from the .lbl file
         self.dataNameDict = {} #Initialization of a dictionary that will index other dictionaries based on the data name
-        self.labelData = self.getLabelData() #Automatically calls the function to get data from the label 
+        self.data = self.getLabelData() #Automatically calls the function to get data from the label 
 
     def getLabelData(self):
         byteSizeRef = {'c':1,'b':1,'B':1,'?':1,'h':2,'H':2,'i':4,'I':4,'l':4,'L':4,'q':8,'Q':8,'f':4,'d':8} #Size of each binary format character in bytes to find the starting byte
@@ -23,16 +21,16 @@ class PDS3Label():
                 if line[:6] == '/* RJW':
                     line = line.strip().strip('/* RJW,').strip().split(', ')
                     if line[0] == 'BYTES_PER_RECORD':
-                        self.bytesPerRow = line[1]
+                        self.bytesPerRow = int(line[1])
                         continue
                     elif line[0] in self.dataNames:
-                        self.dataNameDict[line[0]] = {'NAME':line[0],'FORMAT':line[1],'NUM_DIMS':line[2],'START_BYTE':byteNum}
+                        self.dataNameDict[line[0]] = {'FORMAT':line[1],'NUM_DIMS':line[2],'START_BYTE':byteNum}
                         for i in range(int(line[2])):
                             self.dataNameDict[line[0]]['DIM'+str(i+1)] = line[i+3]
                     if len(line) > 2:
                         byteNum += np.prod([int(i) for i in line[3:]])*byteSizeRef[line[1]]
         return self.dataNameDict 
-
+#----------------------------------------------------------------------------------------
 def getFiles(startTime, endTime, fileType, dataFolder, instrument):
 
     if fileType.startswith('.'): pass
@@ -67,49 +65,81 @@ def getFiles(startTime, endTime, fileType, dataFolder, instrument):
                     fileNameList = np.append(fileNameList,fileName)
                     filePathList = np.append(filePathList,os.path.join(dataFolder, fileName))                    
     return dateRangeDOY, dateRangeISO, filePathList
+#--------------------------------------------------------------------------------
+class JadeData():
+    def __init__(self,dataFile,startTime,endTime):
+        self.dataFile = dataFile
+        self.startTime = startTime
+        self.endTime = endTime
+        self.dataDict = {}
+        self.dataAvg = []
 
-def graphFGM(timeStart,timeEnd,dataFolder):
+    def test(self):
+        labelPath = self.dataFile.rstrip('.DAT') + '.lbl'
+        label = PDS3Label(labelPath)
 
-    doyList, isoList, filePathList = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm')
+        rows = 8640
 
-    dateData = []
-    xData = []
-    yData = []
-    zData = []
-    timeData = []
-    for i,dataFile in enumerate(filePathList):
-        if 'r1s' in str(filePathList):
-            data = pd.read_csv(dataFile)
-            dateData = np.append(dateData,data['SAMPLE UTC'])
-            xData = np.append(xData,data['BX PLANETOCENTRIC'])
-            yData = np.append(yData,data['BY PLANETOCENTRIC'])
-            zData = np.append(zData, data['BZ PLANETOCENTRIC'])
-            timeData = np.append(timeData,data['DECIMAL DAY'])
-    
-    zippedList = zip(dateData,xData,yData,zData,timeData)
-    sortedList = sorted(zippedList)
-    dateSorted,xSorted,ySorted,zSorted,timeSorted = zip(*sortedList)
-
-    for i,date in enumerate(dateSorted):
-        pass
-
-
-    
-    
+        with open(self.dataFile, 'rb') as f:
+            for _ in range(rows):
+                data = f.read(label.bytesPerRow)
+                
+                for key,value in label.dataNameDict.items():
+                    
 
 
 
-    
+    def getData(self):
+        with open(self.dataFile, "rb") as f:
+            species = 3
+            rows = 8640
+            data = f.read(259872)
+            for i in range(rows):
+                
+                byteStart = 66-1
+                byteEnd = byteStart+1
+                dataSlice = data[byteStart:byteEnd]
+                ionSpecies = struct.unpack('b',dataSlice)[0]
+                                
+                if ionSpecies == species:
+
+                    byteStart = 1-1
+                    byteEnd = byteStart+21
+                    timeStamp = str(data[byteStart:byteEnd],'ascii')                                    
+                    
+                    byteEnd = 289 - 1
+                    countSecMatrix = []
+                    temp = []
+                    for i in range(1,65):
+                        byteStart = byteEnd
+                        byteEnd = byteStart + 4*78
+                        dataSlice = data[byteStart:byteEnd]
+                        countsSec = struct.unpack('f'*78,dataSlice)
+                        countSecMatrix.append(countsSec)
+                        temp.append(np.mean(countsSec))
+                    self.dataAvg.append(temp)
+
+
+
+                    byteEnd = 80161 - 1
+                    energyMatrix = []
+                    for i in range(1,65):
+                        byteStart = byteEnd
+                        byteEnd = byteStart + 4*78
+                        dataSlice = data[byteStart:byteEnd]
+                        energy = struct.unpack('f'*78,dataSlice)
+                        energyMatrix.append(energy)
+                self.dataDict[timeStamp] = {'DATA':countSecMatrix,'DIM1':energyMatrix,'DIM2':None}
+                data = f.read(259872)
+            
+            f.close()
+
 if __name__ == '__main__':
-    dataFolder = pathlib.Path('..\\data\\fgm')
-    timeStart = '2017-03-09T00:00:00.000' #Starting time for analyzing data can be in any UTC format
-    timeEnd = '2017-03-09T23:59:59.000'
-    meta = "juno_2019_v03.tm" 
 
-    graphFGM(timeStart,timeEnd,dataFolder)
+    dataFolder = os.path.join('..','data','jad','JNO-J_SW-JAD-3-CALIBRATED-V1.0','ION_SPECIES','JAD_L30_LRS_ION_ANY_CNT_2017068_V02.DAT')
+    #RJW, Name, Format, dimnum, size dim 1, size dim 2,...
+    timeStart = 
+    timeEnd = 2
 
-
-    testLabel = pathlib.Path('..\\data\\jad\\ION_SPECIES\\JAD_L30_LRS_ION_ANY_CNT_2017068_V02.LBL')
-    label = PDS3Label(testLabel)
-    print(label.labelData)
-    
+    jade = JadeData(dataFolder,timeStart,timeEnd)
+    jade.test() 

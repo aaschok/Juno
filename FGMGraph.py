@@ -6,6 +6,16 @@ import tkinter as tk
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+class FGMData():
+    def __init__(self,dataFile, startTime,endTime):
+        self.dataFile = dataFile
+        self.startTime = startTime
+        self.endTime = endTime
+        self.dataDict = {}
+        self.test = []
+
+    def getData(self):
+        
 
 class FGMGraph():
     """Class for collecting FGM data from .csv files and plotting in variable time frames with cooresponding position.
@@ -84,20 +94,6 @@ class FGMGraph():
                 plt.savefig(os.path.join('.\\figures', fileSaveName))
 
         timeDataET = [spice.utc2et(x) for x in posTimeData]
-
-        positions, lightTimes = spice.spkpos('JUNO', timeDataET, 'J2000', 'NONE', 'JUPITER BARYCENTER')
-        positions = positions.T/7.1492e7
-        spice.unload(meta)
-
-        fig = plt.figure(figsize=(7,7))
-        ax  = fig.add_subplot(111, projection='3d')
-        ax.set_xlabel('X($R_J)$')
-        ax.set_ylabel('Y($R_J)$')
-        ax.set_zlabel('Z($R_J)$')
-        ax.plot(positions[0], positions[1], positions[2])
-        fileSaveName = f'pos_{self.timeStart[:11]}-{self.timeEnd[:11]}'
-        plt.savefig(os.path.join('.\\figures', fileSaveName))
-
 
 
 if __name__ == '__main__':

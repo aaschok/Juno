@@ -4,19 +4,25 @@ import os,struct,scipy,logging
 
 logging.basicConfig(filename='test.log',filemode='w',level=logging.DEBUG)
 
-class JadeGraph():
+class JadeData():
     def __init__(self,dataFolder,startTime,endTime):
         self.dataFolder = dataFolder
         self.startTime = startTime
         self.endTime = endTime
-    
-    def Graph(self):
+        self.dataDict = {}
+        self.dataAvg = []
+
+    def test(self):
+        for jadeFile in self.dataFolder:
+            with open(jadeFile,'rb') as f:
+                species = 3
+                
+
+
+    def getData(self):
         with open(self.dataFolder, "rb") as f:
             species = 3
             rows = 8640
-            timeList = np.array([])
-            energyMatrix = []
-            countSecMatrix = []
             data = f.read(259872)
             for i in range(rows):
                 
@@ -29,63 +35,47 @@ class JadeGraph():
 
                     byteStart = 1-1
                     byteEnd = byteStart+21
-                    timeStamp = str(data[byteStart:byteEnd],'ascii')
-                    timeList = np.append(timeList,timeStamp[9:])
-
-                    
-                    byteStart = 69-1
-                    byteEnd = byteStart+2
-                    dataSlice = data[byteStart:byteEnd]
-                    units = struct.unpack('H',dataSlice)[0]
-                    
-
+                    timeStamp = str(data[byteStart:byteEnd],'ascii')                                    
                     
                     byteEnd = 289 - 1
+                    countSecMatrix = []
+                    temp = []
                     for i in range(1,65):
                         byteStart = byteEnd
                         byteEnd = byteStart + 4*78
                         dataSlice = data[byteStart:byteEnd]
                         countsSec = struct.unpack('f'*78,dataSlice)
                         countSecMatrix.append(countsSec)
+                        temp.append(np.mean(countsSec))
+                    self.dataAvg.append(temp)
+
+
 
                     byteEnd = 80161 - 1
+                    energyMatrix = []
                     for i in range(1,65):
                         byteStart = byteEnd
                         byteEnd = byteStart + 4*78
                         dataSlice = data[byteStart:byteEnd]
                         energy = struct.unpack('f'*78,dataSlice)
                         energyMatrix.append(energy)
+                self.dataDict[timeStamp] = {'DATA':countSecMatrix,'DIM1':energyMatrix,'DIM2':None}
                 data = f.read(259872)
-
-        countSecMatrix = np.array(countSecMatrix)
-        countSecArray = countSecMatrix.flatten()
-
-        energyMatrix = np.array(energyMatrix)
-        energyArray = energyMatrix.flatten()
-
-        plt.plot(energyArray,countSecArray)
-        plt.title('Counts Vs. E')
-        plt.ylabel('Counts/Sec')
-        plt.xlabel('eV/q')
-        plt.show()
-        plt.specgram(energyArray,Fs=599040,NFFT=78,noverlap=0)
-        plt.title('Energy Spec')
-        plt.colorbar()
-        plt.show()
-
-        print(timeList)
-        
-        
-        
-
+            
+            f.close()
 
 
 if __name__ == '__main__':
-
-    dataFolder = os.path.join('..','data','jad','ION_SPECIES','JAD_L30_LRS_ION_ANY_CNT_2017068_V02.DAT')
+    dataFolder = os.path.join('..','data','jad','JNO-J_SW-JAD-3-CALIBRATED-V1.0','ION_SPECIES','JAD_L30_LRS_ION_ANY_CNT_2017068_V02.DAT')
     #RJW, Name, Format, dimnum, size dim 1, size dim 2,...
     timeStart = 1
     timeEnd = 2
 
-    jade = JadeGraph(dataFolder,timeStart,timeEnd)
-    jade.Graph() 
+    jade = JadeData(dataFolder,timeStart,timeEnd)
+    jade.getData() 
+    print(jade.dataDict.keys())
+
+    plt.imshow(np.log(np.array(jade.dataAvg).T)>0,origin='lower',aspect='auto',cmap='plasma')
+    plt.colorbar()
+    plt.show()
+            
