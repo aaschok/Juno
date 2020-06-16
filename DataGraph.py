@@ -3,11 +3,11 @@ from dataclasses import *
 
 if __name__ == '__main__':
     
-    timeStart = '2017-03-09T00:00:00.000'
+    timeStart = '2017-03-08T00:00:00.000'
     timeEnd = '2017-03-09T23:59:59.000'
 
     dataFolder = os.path.join('..','data','jad')
-    DOY,ISO,datFiles = getFiles(timeStart,timeEnd,'.DAT',dataFolder,'JAD_L30_LRS_ION') 
+    DOY,ISO,datFiles = getFiles(timeStart,timeEnd,'.DAT',dataFolder,'JAD_L30_LRS_ION_ANY_CNT') 
 
     jade = JadeData(datFiles,timeStart,timeEnd)
 
@@ -17,7 +17,6 @@ if __name__ == '__main__':
     fgm = FGMData(csvFiles,timeStart,timeEnd)
 
     for date in jade.dataDict.keys():
-        
         jadeData = jade.dataDict[date]      
         fgmData = fgm.dataDict[date]
         
@@ -29,7 +28,7 @@ if __name__ == '__main__':
 
             fig, (ax1,ax2) = plt.subplots(2,1,sharex=True,figsize=(9,4))
             pcm = ax1.imshow(np.transpose(jadeData['DATA_ARRAY'][jadStart:jadIndex])>0,origin='lower',aspect='auto',cmap='plasma',extent=((i-1)*6,i*6,0,64))
-
+            ax1.set_title(date)
 
             ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex],fgmData['BX'][fgmStart:fgmIndex],label='$B_x$',linewidth=1)
             ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex],fgmData['BY'][fgmStart:fgmIndex],label='$B_y$',linewidth=1)
@@ -37,6 +36,8 @@ if __name__ == '__main__':
             ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex],fgmData['B'][fgmStart:fgmIndex],'black',label='$^+_-|B|$',linewidth=0.5)
             ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex],-fgmData['B'][fgmStart:fgmIndex],'black',linewidth=0.5)
             ax2.legend(loc=(1.01,0.1))
+            ax2.set_xlabel('Hrs')
+            ax2.set_ylabel('|B| (nT)')
 
             fgmStart = fgmIndex
             jadStart = jadIndex
@@ -48,8 +49,6 @@ if __name__ == '__main__':
 
             plt.savefig(os.path.join('..\\figures', fileSaveName))
 
-            
-    plt.show()
 
             
 

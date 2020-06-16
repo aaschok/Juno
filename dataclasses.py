@@ -26,7 +26,8 @@ def getFiles(startTime, endTime, fileType, dataFolder, instrument):
     dateRangeDOY = [] #Range of dates in string 'YearDayofyear' format
     for date in dateRangeISOTemp: 
             dateDOY = date.strftime('%Y%j')
-            dateRangeDOY = np.append(dateRangeDOY,dateDOY)        
+            dateRangeDOY = np.append(dateRangeDOY,dateDOY)   
+    dateRangeDOY = np.sort(dateRangeDOY)  
 
     filePathList = []
     fileNameList = []
@@ -35,7 +36,15 @@ def getFiles(startTime, endTime, fileType, dataFolder, instrument):
             for j,date in enumerate(dateRangeDOY):
                 if fileName.endswith(fileType) and date in fileName and fileName not in fileNameList and fileName[:len(instrument)] == instrument:
                     fileNameList = np.append(fileNameList,fileName) #List of all filenames is created to cheack and ensure the same file is not selected twice
-                    filePathList = np.append(filePathList,os.path.join(parentDir, fileName))    #The path to the correct file is saved in a list                    
+                    filePathList = np.append(filePathList,os.path.join(parentDir, fileName))    #The path to the correct file is saved in a list 
+
+    temp = []
+    for i,j in enumerate(dateRangeDOY):
+        for k in filePathList:
+            if j in k:
+                temp = np.append(temp,k)
+    filePathList = temp
+
     return dateRangeDOY, dateRangeISO, filePathList #The range of dates in DOY and ISO formats as well as the file paths list is returned
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 class PDS3Label(): 
@@ -92,7 +101,6 @@ class JadeData():
             logging.debug(label.dataNameDict)
             rows = 8640 #All LRS jade data has 8640 rows of data per file
             species = 3 #The ion species interested in as defined in the label
-
             with open(dataFile, 'rb') as f:
                 for _ in range(rows):
                     data = f.read(label.bytesPerRow)    
