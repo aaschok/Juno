@@ -24,18 +24,9 @@ def getFiles(startTime, endTime, fileType, dataFolder, instrument):
     dateRangeISO = [datetime.date.isoformat(x) for x in dateRangeISOTemp] #Range of dates in string format 'Y-M-D'
     
     dateRangeDOY = [] #Range of dates in string 'YearDayofyear' format
-    for date in dateRangeISOTemp: #Creates an array of all days between the two specified times in Y-DOY format
-        if datetime.date.timetuple(date).tm_yday < 10: #Datetime does not return day of year with preceding zeros if necessary so they must be added here
-            dateDOY = str(datetime.date.timetuple(date).tm_year)+'00'+str(datetime.date.timetuple(date).tm_yday)
-            dateRangeDOY = np.append(dateRangeDOY,dateDOY)
-
-        elif datetime.date.timetuple(date).tm_yday >= 100:
-            dateDOY = str(datetime.date.timetuple(date).tm_year)+str(datetime.date.timetuple(date).tm_yday)
-            dateRangeDOY = np.append(dateRangeDOY,dateDOY)
-        
-        elif datetime.date.timetuple(date).tm_yday < 100:
-            dateDOY = str(datetime.date.timetuple(date).tm_year)+'0'+str(datetime.date.timetuple(date).tm_yday)
-            dateRangeDOY = np.append(dateRangeDOY,dateDOY) 
+    for date in dateRangeISOTemp: 
+            dateDOY = date.strftime('%Y%j')
+            dateRangeDOY = np.append(dateRangeDOY,dateDOY)        
 
     filePathList = []
     fileNameList = []
@@ -81,14 +72,14 @@ class PDS3Label():
         return self.dataNameDict #The dictionary is returned
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 class JadeData():
-    """Class for reading and getting data from a single .dat file jade provides.\n
+    """Class for reading and getting data from a list of .dat file from the get files function provides.\n
     Datafile must be a single .dat file.\n
     Start time must be in UTC e.g. '2017-03-09T00:00:00.000'.\n
     End time must be in UTC e.g. '2017-03-09T00:00:00.000'.\n
     """
     def __init__(self,dataFile,startTime,endTime):
         self.dataFileList = dataFile
-        self.startTime = datetime.datetime.fromisoformat(startTime)
+        self.startTime = datetime.datetime.fromisoformat(startTime) #Converted to datetime.datetime object for easier date manipulation
         self.endTime = datetime.datetime.fromisoformat(endTime)
         self.dataDict = {}
         self.getData() #Automatically gets the data from the file
@@ -99,144 +90,109 @@ class JadeData():
             labelPath = dataFile.rstrip('.DAT') + '.lbl'    #All .dat files should come with an accompanying .lbl file
             label = PDS3Label(labelPath)    #The label file is parsed for the data needed
             logging.debug(label.dataNameDict)
-            rows = 8640
-            species = 3
+            rows = 8640 #All LRS jade data has 8640 rows of data per file
+            species = 3 #The ion species interested in as defined in the label
 
             with open(dataFile, 'rb') as f:
                 for _ in range(rows):
-                    data = f.read(label.bytesPerRow)
+                    data = f.read(label.bytesPerRow)    
                     
-                    timeData = label.dataNameDict['DIM0_UTC']
-                    startByte = timeData['START_BYTE']
-                    endByte = timeData['END_BYTE']
-                    dataSlice = data[startByte:endByte]
-                    dateTimeStamp = datetime.datetime.strptime(str(dataSlice,'ascii'),'%Y-%jT%H:%M:%S.%f')
-                    dateStamp = str(dateTimeStamp.date())
-                    time = dateTimeStamp.time()
-                    timeStamp = time.hour + time.minute/60 + time.second/3600
+                    timeData = label.dataNameDict['DIM0_UTC']   #Label data for the time stamp
+                    startByte = timeData['START_BYTE']  #Byte where the time stamp starts
+                    endByte = timeData['END_BYTE']  #Byte where the time stamp ends
+                    dataSlice = data[startByte:endByte] #The slice of data that contains the time stamp
+                    dateTimeStamp = datetime.datetime.strptime(str(dataSlice,'ascii'),'%Y-%jT%H:%M:%S.%f')  #The time stamp is converted from DOY format to a datetime object
+                    dateStamp = str(dateTimeStamp.date())   #A string of the day date to be used as the main organizational key in the data dictionary
+                    time = dateTimeStamp.time() #The time in hours to microseconds for the row
+                    timeStamp = time.hour + time.minute/60 + time.second/3600   #Convert the time to decimal hours
 
-                    if dateStamp in self.dataDict:
+                    if dateStamp in self.dataDict:  #Check if a entry for the date already exists in the data dictionary
                         pass
                     else:
                         self.dataDict[dateStamp] = {}
                         
-                    if dateTimeStamp > self.endTime:
-                            return self.dataDict
+                    if dateTimeStamp > self.endTime:    #If the desired end date has been passed the function ends
+                            f.close()   
+                            return 
 
-                    speciesObjectData = label.dataNameDict['PACKET_SPECIES']
+                    speciesObjectData = label.dataNameDict['PACKET_SPECIES']    #The species data from teh label is pulled
                     startByte = speciesObjectData['START_BYTE']
                     endByte = speciesObjectData['END_BYTE']
                     dataSlice = data[startByte:endByte]
-                    ionSpecies = struct.unpack(speciesObjectData['FORMAT'],dataSlice)[0]
+                    ionSpecies = struct.unpack(speciesObjectData['FORMAT'],dataSlice)[0] #Species type for the row is found
 
-                    if ionSpecies == species:
+                    if ionSpecies == species:   #If the species for the row is the desired species continue finding data
                         
                         if 'TIME_ARRAY' not in self.dataDict[dateStamp]:
                             self.dataDict[dateStamp]['TIME_ARRAY'] = []
-                        self.dataDict[dateStamp]['TIME_ARRAY'].append(timeStamp)
+                        self.dataDict[dateStamp]['TIME_ARRAY'].append(timeStamp)    #Array to hold time stamps is created and the decimal hour time is appended to it
                             
 
 
-                        dataObjectData = label.dataNameDict['DATA']
+                        dataObjectData = label.dataNameDict['DATA'] #Label data for the data is found 
                         startByte = dataObjectData['START_BYTE']
                         endByte = dataObjectData['END_BYTE']
-                        dataSlice = data[startByte:endByte]
-                        temp = struct.unpack(dataObjectData['FORMAT']*dataObjectData['DIM1']*dataObjectData['DIM2'],dataSlice)
-                        temp = np.asarray(temp).reshape(dataObjectData['DIM1'],dataObjectData['DIM2'])
-                        dataArray = [np.mean(row) for row in temp]
+                        dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
+                        temp = struct.unpack(dataObjectData['FORMAT']*dataObjectData['DIM1']*dataObjectData['DIM2'],dataSlice) #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
+                        temp = np.asarray(temp).reshape(dataObjectData['DIM1'],dataObjectData['DIM2'])  #The data is put into a matrix of the size defined in the label
+                        dataArray = [np.mean(row) for row in temp]  #Each rows average is found to have one column 
 
                         if 'DATA_ARRAY' not in self.dataDict[dateStamp]:
                             self.dataDict[dateStamp]['DATA_ARRAY'] = []
                         
-                        self.dataDict[dateStamp]['DATA_ARRAY'].append(np.log(dataArray))
+                        self.dataDict[dateStamp]['DATA_ARRAY'].append(np.log(dataArray)) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
             f.close()
                     
 class FGMData():
+    """A class for reading singular csv files and getting data for Bx, By, and Bz.\n
+    Datafile must be a list of .csv files from.\n
+    Start time must be in UTC e.g. '2017-03-09T00:00:00.000'.\n
+    End time must be in UTC e.g. '2017-03-09T00:00:00.000'.
+    """
     def __init__(self,dataFile,startTime,endTime):
         self.dataFileList = dataFile
-        self.startTime = datetime.datetime.fromisoformat(startTime)
+        self.startTime = datetime.datetime.fromisoformat(startTime) #Converted to datetime.datetime object for easier date manipulation
         self.endTime = datetime.datetime.fromisoformat(endTime)
         self.dataDict = {}
-        self.getData()
+        self.getData() #Automatically gets the data from the file
 
     def getData(self):
         
         for dataFile in self.dataFileList:
-            data = pd.read_csv(dataFile)
+            data = pd.read_csv(dataFile)    #Using pandas module the csv is read
             dateTimeStamp = data['SAMPLE UTC']
             
+            closestStart = np.where(dateTimeStamp == min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.startTime)))[0][0]   #Finds closest time in the lsit to the starting time
+            closestEnd = np.where(dateTimeStamp == min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.endTime)))[0][0]   #Finds closest time in the lsit to the ending time
             
-            closestStart = min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.startTime))
-            closestEnd = min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.endTime))
-            
+
             if closestStart == 0 and closestEnd == len(dateTimeStamp):  
-                dateTimeStamp = dateTimeStamp[closestStart:closestEnd]
-                magXData = data['BX PLANETOCENTRIC'][closestStart:closestEnd+1]
-                magYData = data['BY PLANETOCENTRIC'][closestStart:closestEnd+1]
-                magZData = data['BZ PLANETOCENTRIC'][closestStart:closestEnd+1]
-            else:
                 magXData = data['BX PLANETOCENTRIC']
                 magYData = data['BY PLANETOCENTRIC']
                 magZData = data['BZ PLANETOCENTRIC']
+            else:
+                dateTimeStamp = dateTimeStamp[closestStart:closestEnd+1]
+                magXData = data['BX PLANETOCENTRIC'][closestStart:closestEnd+1]
+                magYData = data['BY PLANETOCENTRIC'][closestStart:closestEnd+1]
+                magZData = data['BZ PLANETOCENTRIC'][closestStart:closestEnd+1]
+                
 
-            for stamp in dateTimeStamp:
+            for stamp in dateTimeStamp: #For each time stamp the day date is found and decimal hour is found
                 date = str(datetime.datetime.fromisoformat(stamp).date())
 
                 time = datetime.datetime.fromisoformat(stamp).time()
                 time = time.hour + time.minute/60 + time.second/3600
 
 
-                if date not in self.dataDict:
+                if date not in self.dataDict:   #If a key entry for the day doesnt exist one is created
                     self.dataDict[date] = {'TIME_ARRAY':[]}
-                self.dataDict[date]['TIME_ARRAY'].append(time)
-            self.dataDict[date]['BX'] = magXData
-            self.dataDict[date]['BY'] = magYData
-            self.dataDict[date]['BZ'] = magZData
-            self.dataDict[date]['B'] = np.sqrt(magXData**2+magYData**2+magZData**2)
+                self.dataDict[date]['TIME_ARRAY'].append(time)  #Time stamp for each time in the day is added to the array
+            self.dataDict[date]['BX'] = magXData    #Full Bx data array is added to the dictionary
+            self.dataDict[date]['BY'] = magYData    #Full By data array is added to the dictionary
+            self.dataDict[date]['BZ'] = magZData    #Full Bz data array is added to the dictionary
+            self.dataDict[date]['B'] = np.sqrt(magXData**2+magYData**2+magZData**2) #Full B data array is added to the dictionary
         
         
 if __name__ == '__main__':
-    
-    timeStart = '2017-03-09T00:00:00.000'
-    timeEnd = '2017-03-09T23:59:59.000'
-
-    dataFolder = os.path.join('..','data','jad')
-    DOY,ISO,datFiles = getFiles(timeStart,timeEnd,'.DAT',dataFolder,'JAD_L30_LRS_ION') 
-
-    jade = JadeData(datFiles,timeStart,timeEnd)
-
-    dataFolder = os.path.join('..','data','fgm')
-    DOY,ISO,csvFiles = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm_jno_l3') 
-    
-    fgm = FGMData(csvFiles,timeStart,timeEnd)
-
-    for date in jade.dataDict.keys():
-        
-        jadeData = jade.dataDict[date]      
-        fgmData = fgm.dataDict[date]
-        
-        fgmStart = 0
-        jadStart = 0
-        for i in range(1,5):
-            jadIndex = min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-i*6))+1
-            fgmIndex = min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-i*6))+1
-
-            fig, (ax1,ax2) = plt.subplots(2,1,sharex=True,figsize=(9,4))
-            pcm = ax1.imshow(np.transpose(jadeData['DATA_ARRAY'][jadStart:jadIndex])>0,origin='lower',aspect='auto',cmap='plasma',extent=((i-1)*6,i*6,0,64))
-
-
-            ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex],fgmData['BX'][fgmStart:fgmIndex],label='$B_x$',linewidth=1)
-            ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex],fgmData['BY'][fgmStart:fgmIndex],label='$B_y$',linewidth=1)
-            ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex],fgmData['BZ'][fgmStart:fgmIndex],label='$B_z$',linewidth=1)
-            ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex],fgmData['B'][fgmStart:fgmIndex],'black',label='$^+_-|B|$',linewidth=0.5)
-            ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex],-fgmData['B'][fgmStart:fgmIndex],'black',linewidth=0.5)
-            ax2.legend(loc=(1.01,0.1))
-
-            fgmStart = fgmIndex
-            jadStart = jadIndex
-
-            
-
-    
-    plt.show()
+    pass
         
