@@ -4,7 +4,7 @@ import os,datetime,logging,pathlib,struct
 import matplotlib.pyplot as plt
 
 logging.basicConfig(filename='dataclasses.log',filemode='w',level=logging.DEBUG)
-logging.disable(logging.DEBUG)
+
 
 def getFiles(startTime, endTime, fileType, dataFolder, instrument):
     """Function whitch finds all files that have your specified parameters in their name.\n
@@ -52,7 +52,7 @@ class PDS3Label():
     returns a dictionary """
     def __init__(self,labelFile):
         self.label = labelFile
-        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA'] #All the object names you want to find info on from the .lbl file
+        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA','DIM2_ELEVATION'] #All the object names you want to find info on from the .lbl file
         self.dataNameDict = {} #Initialization of a dictionary that will index other dictionaries based on the data name
         self.getLabelData() #Automatically calls the function to get data from the label 
         
@@ -64,6 +64,8 @@ class PDS3Label():
             line = f.readline()
             while line != '':   #Each line is read through in the label
                 line = f.readline()
+                if 'FILE_RECORDS' in line:
+                    self.rows = int(line[12:].strip().lstrip('=').strip())
                 if line[:6] == '/* RJW':    #If a comment key is found parsing it begins
                     line = line.strip().strip('/* RJW,').strip().split(', ')    #The key is split up into a list removing the RJW
                     if line[0] == 'BYTES_PER_RECORD':
@@ -99,7 +101,7 @@ class JadeData():
             labelPath = dataFile.rstrip('.DAT') + '.lbl'    #All .dat files should come with an accompanying .lbl file
             label = PDS3Label(labelPath)    #The label file is parsed for the data needed
             logging.debug(label.dataNameDict)
-            rows = 8640 #All LRS jade data has 8640 rows of data per file
+            rows = label.rows #All LRS jade data has 8640 rows of data per file
             species = 3 #The ion species interested in as defined in the label
             with open(dataFile, 'rb') as f:
                 for _ in range(rows):
@@ -149,6 +151,20 @@ class JadeData():
                             self.dataDict[dateStamp]['DATA_ARRAY'] = []
                         
                         self.dataDict[dateStamp]['DATA_ARRAY'].append(np.log(dataArray)) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
+
+
+                        latObjectData = label.dataNameDict['DIM2_ELEVATION'] #Label data for the data is found 
+                        startByte = latObjectData['START_BYTE']
+                        endByte = latObjectData['END_BYTE']
+                        dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
+                        latArray = struct.unpack(latObjectData['FORMAT']*latObjectData['DIM1']*latObjectData['DIM2'],dataSlice) #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
+                        latArray = np.asarray(temp).reshape(latObjectData['DIM1'],latObjectData['DIM2'])  #The data is put into a matrix of the size defined in the label                        
+
+                        if 'LAT_ARRAY' not in self.dataDict[dateStamp]:
+                            self.dataDict[dateStamp]['LAT_ARRAY'] = []
+                        
+                        self.dataDict[dateStamp]['LAT_ARRAY'].append(latArray) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
+
             f.close()
                     
 class FGMData():
