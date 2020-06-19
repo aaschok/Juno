@@ -2,11 +2,19 @@
 from dataclasses import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 def Graph():
 
-    timeStart = '2017-03-08T00:00:00.000'
+    timeStart = '2017-03-09T00:00:00.000'
     timeEnd = '2017-03-09T23:59:59.000'
+
+    orbitsData = {1:'2016-07-31T19:46:02',
+                2:'2016-09-23T03:44:48',
+                3:'2016-11-15T05:36:45',
+                4:'2017-01-07T03:11:30',
+                5:'2017-02-28T22:55:48',
+                6:'2017-04-22T19:14:57'}
 
     dataFolder = os.path.join('..','data','jad')
     DOY,ISO,datFiles = getFiles(timeStart,timeEnd,'.DAT',dataFolder,'JAD_L30_LRS_ION_ANY_CNT') 
@@ -21,7 +29,7 @@ def Graph():
     for date in jade.dataDict.keys():
         jadeData = jade.dataDict[date]      
         fgmData = fgm.dataDict[date]
-        
+
         fgmStart = 0
         jadStart = 0
         for i in range(1,5):
@@ -29,8 +37,19 @@ def Graph():
             fgmIndex = min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-i*6))
 
             fig, (ax1,ax2) = plt.subplots(2,1,sharex=True,figsize=(9,4))
-            pcm = ax1.imshow(np.transpose(jadeData['DATA_ARRAY'][jadStart:jadIndex+1]),origin='lower',aspect='auto',cmap='jet',extent=((i-1)*6,i*6,0,64))
+            spec = ax1.imshow(np.transpose(jadeData['DATA_ARRAY'][jadStart:jadIndex+1]),origin='lower',aspect='auto',cmap='jet',extent=((i-1)*6,i*6,0,64))
             ax1.set_title(date)
+
+            axins = inset_axes(ax1,
+                   width="2%",  # width = 5% of parent_bbox width
+                   height="100%",  # height : 50%
+                   loc='center right',
+                   bbox_to_anchor=(0.04, 0, 1, 1),
+                   bbox_transform=ax1.transAxes,
+                   borderpad=0,
+                   )
+
+            plt.colorbar(spec,cax=axins)
 
             ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['BX'][fgmStart:fgmIndex+1],label='$B_x$',linewidth=1)
             ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['BY'][fgmStart:fgmIndex+1],label='$B_y$',linewidth=1)
@@ -39,10 +58,9 @@ def Graph():
             ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],-fgmData['B'][fgmStart:fgmIndex+1],'black',linewidth=0.5)
             ax2.legend(loc=(1.01,0.1))
             ax2.set_xlabel('Hrs')
-            ax2.xaxis.set_label_coords(1.05,-0.025)
+            ax2.xaxis.set_label_coords(1.04,-0.053)
             ax2.set_ylabel('|B| (nT)')
 
-            
             # latPos = []
             # latLabels = []
             # ax3 = ax2.twiny()
@@ -55,13 +73,20 @@ def Graph():
             fgmStart = fgmIndex
             jadStart = jadIndex
 
+            for orbit, orbitStart in orbitsData.items():
+                orbitStart = datetime.datetime.fromisoformat(orbitStart)
+                currDate = datetime.date.fromisoformat(date)
+
+                if orbitStart.date() > currDate:
+                    orbitNum = orbit
+                    break
+                
             YDOY = datetime.date.fromisoformat(date).strftime('%Y%j')
             timeFormatDict = {1:'00000-0600',2:'0600-1200',3:'1200-1800',4:'1800-2400'}
             
-            fileSaveName = f'jad_fgm_{YDOY}_{timeFormatDict[i]}'
+            fileSaveName = f'jad_fgm_{YDOY}_{timeFormatDict[i]}_orbit{orbitNum}'
 
-            plt.savefig(os.path.join('..\\figures', fileSaveName),bbox_inches='tight',pad_inches=0.02,dpi=150)
-
+            plt.savefig(pathlib.Path(f'..\\figures\\orbit{orbitNum}\\{fileSaveName}'),bbox_inches='tight',pad_inches=0.02,dpi=150)
 
 if __name__ == '__main__':
     

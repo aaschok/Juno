@@ -1,9 +1,11 @@
 import numpy as np 
 import pandas as pd
+import spiceypy as spice
 import os,datetime,logging,pathlib,struct
 import matplotlib.pyplot as plt
 
-logging.basicConfig(filename='dataclasses.log',filemode='w',level=logging.DEBUG)
+
+logging.basicConfig(filename=pathlib.Path('..\\logs\\datagraph.log'),filemode='w',level=logging.DEBUG)
 
 
 def getFiles(startTime, endTime, fileType, dataFolder, instrument):
@@ -52,7 +54,7 @@ class PDS3Label():
     returns a dictionary """
     def __init__(self,labelFile):
         self.label = labelFile
-        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA','DIM2_ELEVATION'] #All the object names you want to find info on from the .lbl file
+        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA','DIM2_ELEVATION','DIM2_AZIMUTH_DESPUN'] #All the object names you want to find info on from the .lbl file
         self.dataNameDict = {} #Initialization of a dictionary that will index other dictionaries based on the data name
         self.getLabelData() #Automatically calls the function to get data from the label 
         
@@ -129,7 +131,7 @@ class JadeData():
                     startByte = speciesObjectData['START_BYTE']
                     endByte = speciesObjectData['END_BYTE']
                     dataSlice = data[startByte:endByte]
-                    ionSpecies = struct.unpack(speciesObjectData['FORMAT'],dataSlice)[0] #Species type for the row is found
+                    ionSpecies = struct.unpack(speciesObjectData['FORMAT']*speciesObjectData['DIM1'],dataSlice)[0] #Species type for the row is found
 
                     if ionSpecies == species:   #If the species for the row is the desired species continue finding data
                         
@@ -153,6 +155,7 @@ class JadeData():
                         self.dataDict[dateStamp]['DATA_ARRAY'].append(np.log(dataArray)) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
 
 
+
                         latObjectData = label.dataNameDict['DIM2_ELEVATION'] #Label data for the data is found 
                         startByte = latObjectData['START_BYTE']
                         endByte = latObjectData['END_BYTE']
@@ -163,13 +166,27 @@ class JadeData():
                         if 'LAT_ARRAY' not in self.dataDict[dateStamp]:
                             self.dataDict[dateStamp]['LAT_ARRAY'] = []
                         
-                        self.dataDict[dateStamp]['LAT_ARRAY'].append(latArray) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
+                        self.dataDict[dateStamp]['LAT_ARRAY'].append(latArray) 
 
-            f.close()
-                    
+
+
+                        longObjectData = label.dataNameDict['DIM2_AZIMUTH_DESPUN'] #Label data for the data is found 
+                        startByte = longObjectData['START_BYTE']
+                        endByte = longObjectData['END_BYTE']
+                        dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
+                        longArray = struct.unpack(longObjectData['FORMAT']*longObjectData['DIM1']*longObjectData['DIM2'],dataSlice) #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
+                        longArray = np.asarray(temp).reshape(longObjectData['DIM1'],longObjectData['DIM2'])  #The data is put into a matrix of the size defined in the label                        
+
+                        if 'LONG_ARRAY' not in self.dataDict[dateStamp]:
+                            self.dataDict[dateStamp]['LONG_ARRAY'] = []
+
+                        self.dataDict[dateStamp]['LONG_ARRAY'].append(longArray)
+
+            f.close()   
+#-------------------------------------------------------------------------------------------------------------------------------------------------     
 class FGMData():
     """A class for reading singular csv files and getting data for Bx, By, and Bz.\n
-    Datafile must be a list of .csv files from.\n
+    Datafile must be a list of .csv files from the getFies unc.\n
     Start time must be in UTC e.g. '2017-03-09T00:00:00.000'.\n
     End time must be in UTC e.g. '2017-03-09T00:00:00.000'.
     """
@@ -215,8 +232,17 @@ class FGMData():
             self.dataDict[date]['BY'] = magYData    #Full By data array is added to the dictionary
             self.dataDict[date]['BZ'] = magZData    #Full Bz data array is added to the dictionary
             self.dataDict[date]['B'] = np.sqrt(magXData**2+magYData**2+magZData**2) #Full B data array is added to the dictionary
-        
-        
+#-------------------------------------------------------------------------------------------------------------------------------------------------        
+class SpiceData():
+
+    def __init__(self,metaKernel,startTime,endTime):
+        self.meta = metaKernel
+        self.startTime = startTime
+        self.endTime = endTime
+
+    def getData(self):
+        pass
+#-------------------------------------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
     pass
         
