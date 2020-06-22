@@ -54,7 +54,7 @@ class PDS3Label():
     returns a dictionary """
     def __init__(self,labelFile):
         self.label = labelFile
-        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA','DIM2_ELEVATION','DIM2_AZIMUTH_DESPUN'] #All the object names you want to find info on from the .lbl file
+        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA','SC_POS_LAT','SC_POS_R'] #All the object names you want to find info on from the .lbl file
         self.dataNameDict = {} #Initialization of a dictionary that will index other dictionaries based on the data name
         self.getLabelData() #Automatically calls the function to get data from the label 
         
@@ -156,12 +156,12 @@ class JadeData():
 
 
 
-                        latObjectData = label.dataNameDict['DIM2_ELEVATION'] #Label data for the data is found 
+                        latObjectData = label.dataNameDict['SC_POS_LAT'] #Label data for the data is found 
                         startByte = latObjectData['START_BYTE']
                         endByte = latObjectData['END_BYTE']
                         dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
-                        latArray = struct.unpack(latObjectData['FORMAT']*latObjectData['DIM1']*latObjectData['DIM2'],dataSlice) #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
-                        latArray = np.asarray(temp).reshape(latObjectData['DIM1'],latObjectData['DIM2'])  #The data is put into a matrix of the size defined in the label                        
+                        latArray = struct.unpack(latObjectData['FORMAT']*latObjectData['DIM1'],dataSlice)[0] #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
+                                        
 
                         if 'LAT_ARRAY' not in self.dataDict[dateStamp]:
                             self.dataDict[dateStamp]['LAT_ARRAY'] = []
@@ -170,17 +170,17 @@ class JadeData():
 
 
 
-                        longObjectData = label.dataNameDict['DIM2_AZIMUTH_DESPUN'] #Label data for the data is found 
+                        longObjectData = label.dataNameDict['SC_POS_R'] #Label data for the data is found 
                         startByte = longObjectData['START_BYTE']
                         endByte = longObjectData['END_BYTE']
                         dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
-                        longArray = struct.unpack(longObjectData['FORMAT']*longObjectData['DIM1']*longObjectData['DIM2'],dataSlice) #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
-                        longArray = np.asarray(temp).reshape(longObjectData['DIM1'],longObjectData['DIM2'])  #The data is put into a matrix of the size defined in the label                        
+                        longArray = struct.unpack(longObjectData['FORMAT']*longObjectData['DIM1'],dataSlice)[0] #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
+                                               
 
-                        if 'LONG_ARRAY' not in self.dataDict[dateStamp]:
-                            self.dataDict[dateStamp]['LONG_ARRAY'] = []
+                        if 'DIST_ARRAY' not in self.dataDict[dateStamp]:
+                            self.dataDict[dateStamp]['DIST_ARRAY'] = []
 
-                        self.dataDict[dateStamp]['LONG_ARRAY'].append(longArray)
+                        self.dataDict[dateStamp]['DIST_ARRAY'].append(longArray)
 
             f.close()   
 #-------------------------------------------------------------------------------------------------------------------------------------------------     
@@ -195,9 +195,9 @@ class FGMData():
         self.startTime = datetime.datetime.fromisoformat(startTime) #Converted to datetime.datetime object for easier date manipulation
         self.endTime = datetime.datetime.fromisoformat(endTime)
         self.dataDict = {}
-        self.getData() #Automatically gets the data from the file
+        self.getIonData() #Automatically gets the data from the file
 
-    def getData(self):
+    def getIonData(self):
         
         for dataFile in self.dataFileList:
             data = pd.read_csv(dataFile)    #Using pandas module the csv is read

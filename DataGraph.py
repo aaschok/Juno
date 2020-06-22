@@ -6,7 +6,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 def Graph():
 
-    timeStart = '2017-02-20T00:00:00.000'
+    timeStart = '2017-03-09T00:00:00.000'
     timeEnd = '2017-03-09T23:59:59.000'
 
     orbitsData = {1:'2016-07-31T19:46:02',
@@ -24,8 +24,8 @@ def Graph():
     dataFolder = os.path.join('..','data','fgm')
     DOY,ISO,csvFiles = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm_jno_l3') 
     
-    fgm = FGMData(csvFiles,timeStart,timeEnd)
 
+    fgm = FGMData(csvFiles,timeStart,timeEnd)
     for date in ISO:
         
         fgmStart = 0
@@ -36,6 +36,9 @@ def Graph():
 
             if date in jade.dataDict.keys():
                 jadeData = jade.dataDict[date]  
+
+                logging.debug(jadeData['LAT_ARRAY'])
+                logging.debug(jadeData['DIST_ARRAY'])
 
                 jadIndex = min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-i*6))
                 
@@ -50,6 +53,37 @@ def Graph():
                    borderpad=0,
                    )
                 fig.colorbar(spec,cax=axins)
+
+                ax3 = ax2.twiny()
+                ax4 = ax3.twiny()
+                latLabels, distLabels = [],[]
+                if i == 1:
+                    for num in range(0,7):
+                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ L") 
+                        distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$") 
+                elif i == 2:
+                    for num in range(6,13):
+                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ L") 
+                        distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$")
+                elif i == 3:
+                    for num in range(12,19):
+                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ L") 
+                        distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$")
+                elif i == 4:
+                    for num in range(18,25):
+                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ L") 
+                        distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$")
+
+                ax3.set_xticks([0,1,2,3,4,5,6])
+                ax3.set_xticklabels(latLabels)    
+                ax3.xaxis.set_ticks_position('bottom')
+                ax3.tick_params(axis='both',which='both',length=0,pad = 20)
+
+                ax4.set_xticks([0,1,2,3,4,5,6])
+                ax4.set_xticklabels(distLabels)    
+                ax4.xaxis.set_ticks_position('bottom')
+                ax4.tick_params(axis='both',which='both',length=0,pad = 33)
+
                 jadStart = jadIndex
             ax1.set_title(date)
 
