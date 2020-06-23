@@ -6,7 +6,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 def Graph():
 
-    timeStart = '2017-03-09T00:00:00.000'
+    timeStart = '2017-03-08T00:00:00.000'
     timeEnd = '2017-03-09T23:59:59.000'
 
     orbitsData = {1:'2016-07-31T19:46:02',
@@ -59,19 +59,19 @@ def Graph():
                 latLabels, distLabels = [],[]
                 if i == 1:
                     for num in range(0,7):
-                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ L") 
+                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ Lat") 
                         distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$") 
                 elif i == 2:
                     for num in range(6,13):
-                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ L") 
+                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ Lat") 
                         distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$")
                 elif i == 3:
                     for num in range(12,19):
-                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ L") 
+                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ Lat") 
                         distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$")
                 elif i == 4:
                     for num in range(18,25):
-                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ L") 
+                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ Lat") 
                         distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$")
 
                 ax3.set_xticks([0,1,2,3,4,5,6])
@@ -122,62 +122,6 @@ def Graph():
 
             plt.savefig(pathlib.Path(f'..\\figures\\orbit{orbitNum}\\{fileSaveName}'),bbox_inches='tight',pad_inches=0.02,dpi=150)
             plt.close(fig)
-
-        # for i in range(1,5):
-        #     jadIndex = min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-i*6))
-        #     fgmIndex = min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-i*6))
-
-        #     fig, (ax1,ax2) = plt.subplots(2,1,sharex=True,figsize=(9,4))
-        #     spec = ax1.imshow(np.transpose(jadeData['DATA_ARRAY'][jadStart:jadIndex+1]),origin='lower',aspect='auto',cmap='jet',extent=((i-1)*6,i*6,0,64))
-        #     ax1.set_title(date)
-
-        #     axins = inset_axes(ax1,
-        #            width="2%",  # width = 5% of parent_bbox width
-        #            height="100%",  # height : 50%
-        #            loc='center right',
-        #            bbox_to_anchor=(0.04, 0, 1, 1),
-        #            bbox_transform=ax1.transAxes,
-        #            borderpad=0,
-        #            )
-
-        #     plt.colorbar(spec,cax=axins)
-
-        #     ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['BX'][fgmStart:fgmIndex+1],label='$B_x$',linewidth=1)
-        #     ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['BY'][fgmStart:fgmIndex+1],label='$B_y$',linewidth=1)
-        #     ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['BZ'][fgmStart:fgmIndex+1],label='$B_z$',linewidth=1)
-        #     ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['B'][fgmStart:fgmIndex+1],'black',label='$^+_-|B|$',linewidth=0.5)
-        #     ax2.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],-fgmData['B'][fgmStart:fgmIndex+1],'black',linewidth=0.5)
-        #     ax2.legend(loc=(1.01,0.1))
-        #     ax2.set_xlabel('Hrs')
-        #     ax2.xaxis.set_label_coords(1.04,-0.053)
-        #     ax2.set_ylabel('|B| (nT)')
-
-        #     # latPos = []
-        #     # latLabels = []
-        #     # ax3 = ax2.twiny()
-        #     # ax3.set_xticks([6])
-        #     # ax3.set_xticklabels([newTicks])
-        #     # ax3.xaxis.set_ticks_position('bottom') # set the position of the second x-axis to bottom
-        #     # ax3.xaxis.set_label_position('bottom') # set the position of the second x-axis to bottom
-        #     # ax3.spines['bottom'].set_position(('outward',20))
-
-        #     fgmStart = fgmIndex
-        #     jadStart = jadIndex
-
-            # for orbit, orbitStart in orbitsData.items():
-            #     orbitStart = datetime.datetime.fromisoformat(orbitStart)
-            #     currDate = datetime.date.fromisoformat(date)
-
-            #     if orbitStart.date() > currDate:
-            #         orbitNum = orbit
-            #         break
-                
-            # YDOY = datetime.date.fromisoformat(date).strftime('%Y%j')
-            # timeFormatDict = {1:'00000-0600',2:'0600-1200',3:'1200-1800',4:'1800-2400'}
-            
-            # fileSaveName = f'jad_fgm_{YDOY}_{timeFormatDict[i]}_orbit{orbitNum}'
-
-            # plt.savefig(pathlib.Path(f'..\\figures\\orbit{orbitNum}\\{fileSaveName}'),bbox_inches='tight',pad_inches=0.02,dpi=150)
 
 if __name__ == '__main__':
     
