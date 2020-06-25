@@ -1,6 +1,5 @@
 import numpy as np 
 import pandas as pd
-import spiceypy as spice
 import os,datetime,logging,pathlib,struct
 import matplotlib.pyplot as plt
 
@@ -201,37 +200,42 @@ class FGMData():
         
         for dataFile in self.dataFileList:
             data = pd.read_csv(dataFile)    #Using pandas module the csv is read
+            
             dateTimeStamp = data['SAMPLE UTC']
             
-            closestStart = np.where(dateTimeStamp == min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.startTime)))[0][0]   #Finds closest time in the lsit to the starting time
-            closestEnd = np.where(dateTimeStamp == min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.endTime)))[0][0]   #Finds closest time in the lsit to the ending time
-            
+            # closestStart = np.where(dateTimeStamp == min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.startTime)))[0][0]   #Finds closest time in the lsit to the starting time
+            # closestEnd = np.where(dateTimeStamp == min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.endTime)))[0][0]   #Finds closest time in the lsit to the ending time
 
-            if closestStart == 0 and closestEnd == len(dateTimeStamp):  
-                magXData = data['BX PLANETOCENTRIC']
-                magYData = data['BY PLANETOCENTRIC']
-                magZData = data['BZ PLANETOCENTRIC']
-            else:
-                dateTimeStamp = dateTimeStamp[closestStart:closestEnd+1]
-                magXData = data['BX PLANETOCENTRIC'][closestStart:closestEnd+1]
-                magYData = data['BY PLANETOCENTRIC'][closestStart:closestEnd+1]
-                magZData = data['BZ PLANETOCENTRIC'][closestStart:closestEnd+1]
+            # if closestStart == 0 and closestEnd == len(dateTimeStamp):  
+            #     magXData = data['BX PLANETOCENTRIC']
+            #     magYData = data['BY PLANETOCENTRIC']
+            #     magZData = data['BZ PLANETOCENTRIC']
+            # else:
+            #     dateTimeStamp = dateTimeStamp[closestStart:closestEnd+1]
+            #     magXData = data['BX PLANETOCENTRIC'][closestStart:closestEnd+1]
+            #     magYData = data['BY PLANETOCENTRIC'][closestStart:closestEnd+1]
+            #     magZData = data['BZ PLANETOCENTRIC'][closestStart:closestEnd+1]
                 
-
-            for stamp in dateTimeStamp: #For each time stamp the day date is found and decimal hour is found
+            for row,stamp in enumerate(dateTimeStamp): #For each time stamp the day date is found and decimal hour is found
                 date = str(datetime.datetime.fromisoformat(stamp).date())
 
                 time = datetime.datetime.fromisoformat(stamp).time()
                 time = time.hour + time.minute/60 + time.second/3600
 
-
+                magXData = data['BX PLANETOCENTRIC'][row]
+                magYData = data['BY PLANETOCENTRIC'][row]
+                magZData = data['BZ PLANETOCENTRIC'][row]
+                magTot = np.sqrt(magXData**2+magYData**2+magZData**2)
+                
                 if date not in self.dataDict:   #If a key entry for the day doesnt exist one is created
-                    self.dataDict[date] = {'TIME_ARRAY':[]}
+                    self.dataDict[date] = {'TIME_ARRAY':[],'BX':[],'BY':[],'BZ':[],'B':[]}
+            
                 self.dataDict[date]['TIME_ARRAY'].append(time)  #Time stamp for each time in the day is added to the array
-            self.dataDict[date]['BX'] = magXData    #Full Bx data array is added to the dictionary
-            self.dataDict[date]['BY'] = magYData    #Full By data array is added to the dictionary
-            self.dataDict[date]['BZ'] = magZData    #Full Bz data array is added to the dictionary
-            self.dataDict[date]['B'] = np.sqrt(magXData**2+magYData**2+magZData**2) #Full B data array is added to the dictionary
+                self.dataDict[date]['BX'].append(magXData)    #Full Bx data array is added to the dictionary
+                self.dataDict[date]['BY'].append(magYData)    #Full By data array is added to the dictionary
+                self.dataDict[date]['BZ'].append(magZData)    #Full Bz data array is added to the dictionary
+                self.dataDict[date]['B'].append(magTot) #Full B data array is added to the dictionary
+            
 #-------------------------------------------------------------------------------------------------------------------------------------------------        
 class SpiceData():
 
