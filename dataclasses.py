@@ -194,9 +194,9 @@ class FGMData():
         self.startTime = datetime.datetime.fromisoformat(startTime) #Converted to datetime.datetime object for easier date manipulation
         self.endTime = datetime.datetime.fromisoformat(endTime)
         self.dataDict = {}
-        self.getIonData() #Automatically gets the data from the file
+        self.getMagData() #Automatically gets the data from the file
 
-    def getIonData(self):
+    def getMagData(self):
         
         for dataFile in self.dataFileList:
             data = pd.read_csv(dataFile)    #Using pandas module the csv is read
