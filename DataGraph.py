@@ -3,11 +3,12 @@ from dataclasses import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+import spiceypy as spice
 
 def graph():
 
-    timeStart = '2017-02-20T00:00:00'
-    timeEnd = '2017-02-20T23:59:59'
+    timeStart = '2017-03-09T00:00:00'
+    timeEnd = '2017-03-09T23:59:59'
 
     orbitsData = {1:'2016-07-31T19:46:02',
                 2:'2016-09-23T03:44:48',
@@ -23,8 +24,9 @@ def graph():
     dataFolder = os.path.join('..','data','fgm')
     DOY,ISO,csvFiles = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm_jno_l3') 
     fgm = FGMData(csvFiles,timeStart,timeEnd)
+
     metaKernel = 'juno_2019_v03.tm'
-    #spice.furnsh(metaKernel)
+    spice.furnsh(metaKernel)
 
     for date in ISO:
         
@@ -33,11 +35,10 @@ def graph():
         
         for i in range(1,5):
             fig, (ax1,ax2) = plt.subplots(2,1,sharex=True,figsize=(10,4))
+            latLabels, distLabels = [],[]
 
             if date in jade.dataDict.keys():
                 jadeData = jade.dataDict[date]  
-                logging.debug(jadeData['LAT_ARRAY'])
-                logging.debug(jadeData['DIST_ARRAY'])
 
                 jadIndex = min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-i*6))
                 
@@ -53,38 +54,53 @@ def graph():
                    )
                 fig.colorbar(spec,cax=axins)
 
-                ax3 = ax2.twiny()
-                ax4 = ax3.twiny()
-                latLabels, distLabels = [],[]
                 if i == 1:
                     for num in range(0,7):
-                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ Lat") 
-                        distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$") 
+                        stamp = str(jadeData['DATETIME_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))])
+                        
+                        position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
+            
+                        pos = spice.vpack(position[0],position[1],position[2])
+                        radii,longitude,latitude = spice.reclat(pos)
+                        latLabels.append(f'{round(latitude*spice.dpr(),2)}$^o$ Lat')
+                        distLabels.append(f'{round(radii/69911,3)} $R_j$')
+                
                 elif i == 2:
                     for num in range(6,13):
-                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ Lat") 
-                        distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$")
+                        stamp = str(jadeData['DATETIME_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))])
+                        
+                        position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
+            
+                        pos = spice.vpack(position[0],position[1],position[2])
+                        radii,longitude,latitude = spice.reclat(pos)
+                        latLabels.append(f'{round(latitude*spice.dpr(),2)}$^o$ Lat')
+                        distLabels.append(f'{round(radii/69911,3)} $R_j$')
+                
                 elif i == 3:
                     for num in range(12,19):
-                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ Lat") 
-                        distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$")
+                        stamp = str(jadeData['DATETIME_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))])
+                        
+                        position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
+            
+                        pos = spice.vpack(position[0],position[1],position[2])
+                        radii,longitude,latitude = spice.reclat(pos)
+                        latLabels.append(f'{round(latitude*spice.dpr(),2)}$^o$ Lat')
+                        distLabels.append(f'{round(radii/69911,3)} $R_j$')
+
                 elif i == 4:
                     for num in range(18,25):
-                        latLabels = np.append(latLabels,f"{round(jadeData['LAT_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)}$^o$ Lat") 
-                        distLabels = np.append(distLabels,f"{round(jadeData['DIST_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))],2)} $R_J$")
-
-                ax3.set_xticks([0,1,2,3,4,5,6])
-                ax3.set_xticklabels(latLabels)    
-                ax3.xaxis.set_ticks_position('bottom')
-                ax3.tick_params(axis='both',which='both',length=0,pad = 20)
-
-                ax4.set_xticks([0,1,2,3,4,5,6])
-                ax4.set_xticklabels(distLabels)    
-                ax4.xaxis.set_ticks_position('bottom')
-                ax4.tick_params(axis='both',which='both',length=0,pad = 33)
+                        stamp = str(jadeData['DATETIME_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))])
+                        
+                        position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
+            
+                        pos = spice.vpack(position[0],position[1],position[2])
+                        radii,longitude,latitude = spice.reclat(pos)
+                        latLabels.append(f'{round(latitude*spice.dpr(),2)}$^o$ Lat')
+                        distLabels.append(f'{round(radii/69911,3)} $R_j$')
 
                 jadStart = jadIndex
             ax1.set_title(date)
+            
 
             if date in fgm.dataDict.keys():
                 fgmData = fgm.dataDict[date]
@@ -100,11 +116,69 @@ def graph():
                 ax2.set_xlabel('Hrs')
                 ax2.xaxis.set_label_coords(1.04,-0.053)
                 ax2.set_ylabel('|B| (nT)')
-        
+
+                if len(latLabels) == 0 and len(distLabels) == 0:
+                    if i == 1:
+                        for num in range(0,7):
+                            stamp = fgmData['DATETIME_ARRAY'][min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-num))]
+                            
+                            position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
+                
+                            pos = spice.vpack(position[0],position[1],position[2])
+                            radii,longitude,latitude = spice.reclat(pos)
+                            latLabels.append(f'{round(latitude*spice.dpr(),2)}$^o$ Lat')
+                            distLabels.append(f'{round(radii/69911,3)} $R_j$')
+                    
+                    elif i == 2:
+                        for num in range(6,13):
+                            stamp = fgmData['DATETIME_ARRAY'][min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-num))]
+                            
+                            position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
+                
+                            pos = spice.vpack(position[0],position[1],position[2])
+                            radii,longitude,latitude = spice.reclat(pos)
+                            latLabels.append(f'{round(latitude*spice.dpr(),2)}$^o$ Lat')
+                            distLabels.append(f'{round(radii/69911,3)} $R_j$')
+                    
+                    elif i == 3:
+                        for num in range(12,19):
+                            stamp = fgmData['DATETIME_ARRAY'][min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-num))]
+                            
+                            position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
+                
+                            pos = spice.vpack(position[0],position[1],position[2])
+                            radii,longitude,latitude = spice.reclat(pos)
+                            latLabels.append(f'{round(latitude*spice.dpr(),2)}$^o$ Lat')
+                            distLabels.append(f'{round(radii/69911,3)} $R_j$')
+
+                    elif i == 4:
+                        for num in range(18,25):
+                            stamp = fgmData['DATETIME_ARRAY'][min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-num))]
+                            
+                            position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
+                
+                            pos = spice.vpack(position[0],position[1],position[2])
+                            radii,longitude,latitude = spice.reclat(pos)
+                            latLabels.append(f'{round(latitude*spice.dpr(),2)}$^o$ Lat')
+                            distLabels.append(f'{round(radii/69911,3)} $R_j$')
+
                 fgmStart = fgmIndex
             
             if date not in jade.dataDict.keys() and date not in fgm.dataDict.keys():
                 continue
+
+            ax3 = ax2.twiny()
+            ax4 = ax3.twiny()        
+
+            ax3.set_xticks([0,1,2,3,4,5,6])
+            ax3.set_xticklabels(latLabels)    
+            ax3.xaxis.set_ticks_position('bottom')
+            ax3.tick_params(axis='both',which='both',length=0,pad = 20)
+
+            ax4.set_xticks([0,1,2,3,4,5,6])
+            ax4.set_xticklabels(distLabels)    
+            ax4.xaxis.set_ticks_position('bottom')
+            ax4.tick_params(axis='both',which='both',length=0,pad = 33)
 
             for orbit, orbitStart in orbitsData.items():
                 orbitStart = datetime.datetime.fromisoformat(orbitStart)

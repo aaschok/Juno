@@ -23,7 +23,7 @@ KPL/MK
 
    \begindata
 
-      PATH_VALUES     = ( './data' )
+      PATH_VALUES     = ( '../data' )
 
       PATH_SYMBOLS    = ( 'KERNELS' )
 

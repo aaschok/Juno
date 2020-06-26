@@ -100,7 +100,7 @@ class JadeData():
 
     def getData(self):
         for dataFile in self.dataFileList:
-            labelPath = dataFile.rstrip('.DAT') + '.lbl'    #All .dat files should come with an accompanying .lbl file
+            labelPath = dataFile.rstrip('.DAT') + '.LBL'    #All .dat files should come with an accompanying .lbl file
             label = PDS3Label(labelPath)    #The label file is parsed for the data needed
             logging.debug(label.dataNameDict)
             rows = label.rows #All LRS jade data has 8640 rows of data per file
@@ -167,24 +167,24 @@ class JadeData():
                         latArray = struct.unpack(latObjectData['FORMAT']*latObjectData['DIM1'],dataSlice)[0] #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
                                         
 
-                        if 'LAT_ARRAY' not in self.dataDict[dateStamp]:
-                            self.dataDict[dateStamp]['LAT_ARRAY'] = []
+                        # if 'LAT_ARRAY' not in self.dataDict[dateStamp]:
+                        #     self.dataDict[dateStamp]['LAT_ARRAY'] = []
                         
-                        self.dataDict[dateStamp]['LAT_ARRAY'].append(latArray) 
+                        # self.dataDict[dateStamp]['LAT_ARRAY'].append(latArray) 
 
 
 
-                        longObjectData = label.dataNameDict['SC_POS_R'] #Label data for the data is found 
-                        startByte = longObjectData['START_BYTE']
-                        endByte = longObjectData['END_BYTE']
-                        dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
-                        longArray = struct.unpack(longObjectData['FORMAT']*longObjectData['DIM1'],dataSlice)[0] #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
+                        # longObjectData = label.dataNameDict['SC_POS_R'] #Label data for the data is found 
+                        # startByte = longObjectData['START_BYTE']
+                        # endByte = longObjectData['END_BYTE']
+                        # dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
+                        # longArray = struct.unpack(longObjectData['FORMAT']*longObjectData['DIM1'],dataSlice)[0] #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
                                                
 
-                        if 'DIST_ARRAY' not in self.dataDict[dateStamp]:
-                            self.dataDict[dateStamp]['DIST_ARRAY'] = []
+                        # if 'DIST_ARRAY' not in self.dataDict[dateStamp]:
+                        #     self.dataDict[dateStamp]['DIST_ARRAY'] = []
 
-                        self.dataDict[dateStamp]['DIST_ARRAY'].append(longArray)
+                        # self.dataDict[dateStamp]['DIST_ARRAY'].append(longArray)
 
             f.close()   
 #-------------------------------------------------------------------------------------------------------------------------------------------------     
@@ -222,8 +222,9 @@ class FGMData():
             #     magZData = data['BZ PLANETOCENTRIC'][closestStart:closestEnd+1]
                 
             for row,stamp in enumerate(dateTimeStamp): #For each time stamp the day date is found and decimal hour is found
-                date = str(datetime.datetime.fromisoformat(stamp).date())
-
+                
+                dateTimeStamp = datetime.datetime.fromisoformat(stamp)
+                date = str(dateTimeStamp.date())
                 time = datetime.datetime.fromisoformat(stamp).time()
                 time = time.hour + time.minute/60 + time.second/3600
 
@@ -233,8 +234,9 @@ class FGMData():
                 magTot = np.sqrt(magXData**2+magYData**2+magZData**2)
                 
                 if date not in self.dataDict:   #If a key entry for the day doesnt exist one is created
-                    self.dataDict[date] = {'TIME_ARRAY':[],'BX':[],'BY':[],'BZ':[],'B':[]}
-            
+                    self.dataDict[date] = {'DATETIME_ARRAY':[],'TIME_ARRAY':[], 'BX':[], 'BY':[], 'BZ':[], 'B':[]}
+
+                self.dataDict[date]['DATETIME_ARRAY'].append(dateTimeStamp)
                 self.dataDict[date]['TIME_ARRAY'].append(time)  #Time stamp for each time in the day is added to the array
                 self.dataDict[date]['BX'].append(magXData)    #Full Bx data array is added to the dictionary
                 self.dataDict[date]['BY'].append(magYData)    #Full By data array is added to the dictionary
