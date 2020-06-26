@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import os,datetime,logging,pathlib,struct
 import matplotlib.pyplot as plt
+import spiceypy as spice
 
 
 logging.basicConfig(filename=pathlib.Path('..\\logs\\datagraph.log'),filemode='w',level=logging.DEBUG)
@@ -136,7 +137,11 @@ class JadeData():
                         
                         if 'TIME_ARRAY' not in self.dataDict[dateStamp]:
                             self.dataDict[dateStamp]['TIME_ARRAY'] = []
-                        self.dataDict[dateStamp]['TIME_ARRAY'].append(timeStamp)    #Array to hold time stamps is created and the decimal hour time is appended to it
+                        self.dataDict[dateStamp]['TIME_ARRAY'].append(timeStamp)   #Array to hold time stamps is created and the decimal hour time is appended to it
+
+                        if 'DATETIME_ARRAY' not in self.dataDict[dateStamp]:
+                            self.dataDict[dateStamp]['DATETIME_ARRAY'] = []
+                        self.dataDict[dateStamp]['DATETIME_ARRAY'].append(str(dateTimeStamp))   #Array to hold time stamps is created and the decimal hour time is appended to it
                             
 
 
@@ -245,7 +250,17 @@ class SpiceData():
         self.endTime = endTime
 
     def getData(self):
-        pass
+        spice.furnsh(self.meta)
+        timeStart = spice.str2et('2017-03-09T00:00:00.000')
+        timeEnd = spice.str2et(self.endTime)
+
+        position, lighttime = spice.spkpos('JUNO',timeStart,'IAU_JUPITER','NONE','JUPITER')
+    
+        pos = spice.vpack(position[0],position[1],position[2])
+        rad,longitude,latitude = spice.reclat(pos)
+        print(pos,lighttime)
+        print(rad/69911,longitude*spice.dpr(),latitude*spice.dpr())
+        
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
     pass

@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-def Graph():
+def graph():
 
     timeStart = '2017-02-20T00:00:00'
     timeEnd = '2017-02-20T23:59:59'
@@ -16,16 +16,15 @@ def Graph():
                 5:'2017-02-28T22:55:48',
                 6:'2017-04-22T19:14:57'}
 
-    dataFolder = os.path.join('..','data','jad')
+    dataFolder = pathlib.Path('../data/jad')
     DOY,ISO,datFiles = getFiles(timeStart,timeEnd,'.DAT',dataFolder,'JAD_L30_LRS_ION_ANY_CNT') 
-
     jade = JadeData(datFiles,timeStart,timeEnd)
 
     dataFolder = os.path.join('..','data','fgm')
     DOY,ISO,csvFiles = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm_jno_l3') 
-    
-
     fgm = FGMData(csvFiles,timeStart,timeEnd)
+    metaKernel = 'juno_2019_v03.tm'
+    #spice.furnsh(metaKernel)
 
     for date in ISO:
         
@@ -120,12 +119,21 @@ def Graph():
             
             fileSaveName = f'jad_fgm_{YDOY}_{timeFormatDict[i]}'
 
-            plt.savefig(pathlib.Path(f'..\\figures\\orbit{orbitNum}\\{fileSaveName}'),bbox_inches='tight',pad_inches=0.02,dpi=150)
+            plt.savefig(pathlib.Path(f'../figures/orbit{orbitNum}/{fileSaveName}'),bbox_inches='tight',pad_inches=0.02,dpi=150)
             plt.close(fig)
+
+def posTest():
+
+    timeStart = '2017-03-08T06:00:00'
+    timeEnd = '2017-02-20T23:59:59'
+    kernel = 'juno_2019_v03.tm'
+
+    spice = SpiceData(kernel,timeStart,timeEnd)
+    spice.getData()
 
 if __name__ == '__main__':
     
-    Graph()
+    graph()
     
 
 
