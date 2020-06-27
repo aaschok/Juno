@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import spiceypy as spice
 
 
-logging.basicConfig(filename=pathlib.Path('..\\logs\\datagraph.log'),filemode='w',level=logging.DEBUG)
+# logging.basicConfig(filename=pathlib.Path('..\\logs\\datagraph.log'),filemode='w',level=logging.DEBUG) #Creates a log file to show any outputs uncomment to use
 
 
 def getFiles(startTime, endTime, fileType, dataFolder, instrument):
@@ -143,8 +143,6 @@ class JadeData():
                             self.dataDict[dateStamp]['DATETIME_ARRAY'] = []
                         self.dataDict[dateStamp]['DATETIME_ARRAY'].append(str(dateTimeStamp))   #Array to hold time stamps is created and the decimal hour time is appended to it
                             
-
-
                         dataObjectData = label.dataNameDict['DATA'] #Label data for the data is found 
                         startByte = dataObjectData['START_BYTE']
                         endByte = dataObjectData['END_BYTE']
@@ -158,33 +156,11 @@ class JadeData():
                         
                         self.dataDict[dateStamp]['DATA_ARRAY'].append(np.log(dataArray)) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
 
-
-
                         latObjectData = label.dataNameDict['SC_POS_LAT'] #Label data for the data is found 
                         startByte = latObjectData['START_BYTE']
                         endByte = latObjectData['END_BYTE']
                         dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
                         latArray = struct.unpack(latObjectData['FORMAT']*latObjectData['DIM1'],dataSlice)[0] #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
-                                        
-
-                        # if 'LAT_ARRAY' not in self.dataDict[dateStamp]:
-                        #     self.dataDict[dateStamp]['LAT_ARRAY'] = []
-                        
-                        # self.dataDict[dateStamp]['LAT_ARRAY'].append(latArray) 
-
-
-
-                        # longObjectData = label.dataNameDict['SC_POS_R'] #Label data for the data is found 
-                        # startByte = longObjectData['START_BYTE']
-                        # endByte = longObjectData['END_BYTE']
-                        # dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
-                        # longArray = struct.unpack(longObjectData['FORMAT']*longObjectData['DIM1'],dataSlice)[0] #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
-                                               
-
-                        # if 'DIST_ARRAY' not in self.dataDict[dateStamp]:
-                        #     self.dataDict[dateStamp]['DIST_ARRAY'] = []
-
-                        # self.dataDict[dateStamp]['DIST_ARRAY'].append(longArray)
 
             f.close()   
 #-------------------------------------------------------------------------------------------------------------------------------------------------     
@@ -207,19 +183,6 @@ class FGMData():
             data = pd.read_csv(dataFile)    #Using pandas module the csv is read
             
             dateTimeStamp = data['SAMPLE UTC']
-            
-            # closestStart = np.where(dateTimeStamp == min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.startTime)))[0][0]   #Finds closest time in the lsit to the starting time
-            # closestEnd = np.where(dateTimeStamp == min(dateTimeStamp, key=lambda x: abs(datetime.datetime.fromisoformat(x) - self.endTime)))[0][0]   #Finds closest time in the lsit to the ending time
-
-            # if closestStart == 0 and closestEnd == len(dateTimeStamp):  
-            #     magXData = data['BX PLANETOCENTRIC']
-            #     magYData = data['BY PLANETOCENTRIC']
-            #     magZData = data['BZ PLANETOCENTRIC']
-            # else:
-            #     dateTimeStamp = dateTimeStamp[closestStart:closestEnd+1]
-            #     magXData = data['BX PLANETOCENTRIC'][closestStart:closestEnd+1]
-            #     magYData = data['BY PLANETOCENTRIC'][closestStart:closestEnd+1]
-            #     magZData = data['BZ PLANETOCENTRIC'][closestStart:closestEnd+1]
                 
             for row,stamp in enumerate(dateTimeStamp): #For each time stamp the day date is found and decimal hour is found
                 
@@ -246,22 +209,26 @@ class FGMData():
 #-------------------------------------------------------------------------------------------------------------------------------------------------        
 class SpiceData():
 
-    def __init__(self,metaKernel,startTime,endTime):
+    def __init__(self,metaKernel,time):
         self.meta = metaKernel
-        self.startTime = startTime
-        self.endTime = endTime
+        self.time = time
+        self.position = None
+        self.distance = None
+        self.latitude = None
+        self.longitude = None
 
-    def getData(self):
-        spice.furnsh(self.meta)
-        timeStart = spice.str2et('2017-03-09T00:00:00.000')
-        timeEnd = spice.str2et(self.endTime)
+    def Positiondata(self):
+        spice.furnsh(self.meta) #loads the meta kernel that will load all kernels needed
 
-        position, lighttime = spice.spkpos('JUNO',timeStart,'IAU_JUPITER','NONE','JUPITER')
+        time = spice.utc2et(self.time)
+
+        self.position, lighttime = spice.spkpos('JUNO',time,'IAU_JUPITER','NONE','JUPITER') #Finds the position in cartesian coords relative to jupiter
     
-        pos = spice.vpack(position[0],position[1],position[2])
-        rad,longitude,latitude = spice.reclat(pos)
-        print(pos,lighttime)
-        print(rad/69911,longitude*spice.dpr(),latitude*spice.dpr())
+        pos = spice.vpack(self.position[0],self.position[1],self.position[2])   #Packs the position into a vector
+        self.distance,self.longitude,self.latitude = spice.reclat(pos) #Finds radial dist, latitide and longitude
+        self.latitude *= spice.dpr()
+        self.distance /= 69911
+        
         
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':

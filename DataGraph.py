@@ -120,7 +120,7 @@ def graph():
                 if len(latLabels) == 0 and len(distLabels) == 0:
                     if i == 1:
                         for num in range(0,7):
-                            stamp = fgmData['DATETIME_ARRAY'][min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-num))]
+                            stamp = str(jadeData['DATETIME_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))])
                             
                             position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
                 
@@ -131,7 +131,7 @@ def graph():
                     
                     elif i == 2:
                         for num in range(6,13):
-                            stamp = fgmData['DATETIME_ARRAY'][min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-num))]
+                            stamp = str(jadeData['DATETIME_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))])
                             
                             position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
                 
@@ -142,7 +142,7 @@ def graph():
                     
                     elif i == 3:
                         for num in range(12,19):
-                            stamp = fgmData['DATETIME_ARRAY'][min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-num))]
+                            stamp = str(jadeData['DATETIME_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))])
                             
                             position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
                 
@@ -153,7 +153,7 @@ def graph():
 
                     elif i == 4:
                         for num in range(18,25):
-                            stamp = fgmData['DATETIME_ARRAY'][min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-num))]
+                            stamp = str(jadeData['DATETIME_ARRAY'][min(range(len(jadeData['TIME_ARRAY'])), key=lambda j: abs(jadeData['TIME_ARRAY'][j]-num))])
                             
                             position, lighttime = spice.spkpos('JUNO',spice.utc2et(stamp),'IAU_JUPITER','NONE','JUPITER')
                 
@@ -196,18 +196,22 @@ def graph():
             plt.savefig(pathlib.Path(f'../figures/orbit{orbitNum}/{fileSaveName}'),bbox_inches='tight',pad_inches=0.02,dpi=150)
             plt.close(fig)
 
-def posTest():
+def getPos():
 
-    timeStart = '2017-03-08T06:00:00'
-    timeEnd = '2017-02-20T23:59:59'
+    timeStamp = '2017-03-08T06:00:00'
     kernel = 'juno_2019_v03.tm'
 
-    spice = SpiceData(kernel,timeStart,timeEnd)
-    spice.getData()
+    spiceTest = SpiceData(kernel,timeStamp)
+    spiceTest.Positiondata()
+    print(f'This function tests the class for spice data and getting position,radial distance, latitude, and longitude')
+    print(f'Time: {spiceTest.time}')
+    print(f'{spiceTest.position} (x,y,z) km')
+    print(f'{spiceTest.distance} Rj')
+    print(f'{spiceTest.latitude} Degree Lat\n')
 
 if __name__ == '__main__':
     
-    graph()
+    getPos()
     
 
 
