@@ -217,7 +217,7 @@ class SpiceData():
         self.latitude = None
         self.longitude = None
 
-    def Positiondata(self):
+    def positionData(self):
         spice.furnsh(self.meta) #loads the meta kernel that will load all kernels needed
 
         time = spice.utc2et(self.time)

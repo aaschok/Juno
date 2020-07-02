@@ -52,7 +52,8 @@ def graph():
                    bbox_transform=ax1.transAxes,
                    borderpad=0,
                    )
-                fig.colorbar(spec,cax=axins)
+                cbr = plt.colorbar(spec,cax=axins)
+                cbr.set_label('log(Counts/sec)',rotation=270)
 
                 if i == 1:
                     for num in range(0,7):
@@ -202,16 +203,22 @@ def getPos():
     kernel = 'juno_2019_v03.tm'
 
     spiceTest = SpiceData(kernel,timeStamp)
-    spiceTest.Positiondata()
+    spiceTest.positionData()
     print(f'This function tests the class for spice data and getting position,radial distance, latitude, and longitude')
     print(f'Time: {spiceTest.time}')
     print(f'{spiceTest.position} (x,y,z) km')
     print(f'{spiceTest.distance} Rj')
     print(f'{spiceTest.latitude} Degree Lat\n')
 
+def test():
+
+    DOY,ISO,fileList = getFiles('2017-03-09T00:00:11.474','2017-03-09T00:09:29.490','.CSV', pathlib.Path('../data/fgm'), 'fgm')
+    print(fileList)
+
+
 if __name__ == '__main__':
     
-    getPos()
+    graph()
     
 
 
