@@ -4,6 +4,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import spiceypy as spice
+import pandas as pd
+import time
 
 def graph():
 
@@ -210,15 +212,10 @@ def getPos():
     print(f'{spiceTest.distance} Rj')
     print(f'{spiceTest.latitude} Degree Lat\n')
 
-def test():
-
-    DOY,ISO,fileList = getFiles('2017-03-09T00:00:11.474','2017-03-09T00:09:29.490','.CSV', pathlib.Path('../data/fgm'), 'fgm')
-    print(fileList)
 
 
 if __name__ == '__main__':
     
-    graph()
     
 
 
