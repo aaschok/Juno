@@ -95,10 +95,9 @@ class JadeData():
         self.startTime = datetime.datetime.fromisoformat(startTime) #Converted to datetime.datetime object for easier date manipulation
         self.endTime = datetime.datetime.fromisoformat(endTime)
         self.dataDict = {}
-        self.getData() #Automatically gets the data from the file
         
 
-    def getData(self):
+    def getIonData(self):
         for dataFile in self.dataFileList:
             labelPath = dataFile.rstrip('.DAT') + '.LBL'    #All .dat files should come with an accompanying .lbl file
             label = PDS3Label(labelPath)    #The label file is parsed for the data needed
@@ -162,7 +161,11 @@ class JadeData():
                         dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
                         latArray = struct.unpack(latObjectData['FORMAT']*latObjectData['DIM1'],dataSlice)[0] #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
 
-            f.close()   
+            f.close()
+        qqq
+    def getElecData(self):
+        for dataFile in self.dataFileList:
+            pass
 #-------------------------------------------------------------------------------------------------------------------------------------------------     
 class FGMData():
     """A class for reading singular csv files and getting data for Bx, By, and Bz.\n

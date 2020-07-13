@@ -22,6 +22,7 @@ def graph():
     dataFolder = pathlib.Path('../data/jad')
     DOY,ISO,datFiles = getFiles(timeStart,timeEnd,'.DAT',dataFolder,'JAD_L30_LRS_ION_ANY_CNT') 
     jade = JadeData(datFiles,timeStart,timeEnd)
+    jade.getIonData()
 
     dataFolder = os.path.join('..','data','fgm')
     DOY,ISO,csvFiles = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm_jno_l3') 
@@ -206,17 +207,24 @@ def getPos():
 
     spiceTest = SpiceData(kernel,timeStamp)
     spiceTest.positionData()
-    print(f'This function tests the class for spice data and getting position,radial distance, latitude, and longitude')
     print(f'Time: {spiceTest.time}')
     print(f'{spiceTest.position} (x,y,z) km')
     print(f'{spiceTest.distance} Rj')
     print(f'{spiceTest.latitude} Degree Lat\n')
 
+def electronTest():
+    timeStart = '2017-03-09T00:00:00'
+    timeEnd = '2017-03-09T23:59:59'
+
+    dataFolder = pathlib.Path('../data/jad')
+    DOY,ISO,datFiles = getFiles(timeStart,timeEnd,'.DAT',dataFolder,'JAD_L30_LRS_ELC_ANY_CNT') 
+    jade = JadeData(datFiles,timeStart,timeEnd)
+    jade.getElecData()
 
 
 if __name__ == '__main__':
     
-    
+    electronTest()
 
 
             
