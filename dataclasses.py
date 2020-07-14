@@ -162,10 +162,57 @@ class JadeData():
                         latArray = struct.unpack(latObjectData['FORMAT']*latObjectData['DIM1'],dataSlice)[0] #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
 
             f.close()
-        qqq
+
     def getElecData(self):
         for dataFile in self.dataFileList:
-            pass
+            labelPath = dataFile.rstrip('.DAT') + '.LBL'    #All .dat files should come with an accompanying .lbl file
+            label = PDS3Label(labelPath)    #The label file is parsed for the data needed
+            logging.debug(label.dataNameDict)
+            rows = label.rows #All LRS jade data has 8640 rows of data per file
+            with open(dataFile, 'rb') as f:
+                for _ in range(rows):
+                    data = f.read(label.bytesPerRow)    
+                    
+                    timeData = label.dataNameDict['DIM0_UTC']   #Label data for the time stamp
+                    startByte = timeData['START_BYTE']  #Byte where the time stamp starts
+                    endByte = timeData['END_BYTE']  #Byte where the time stamp ends
+                    dataSlice = data[startByte:endByte] #The slice of data that contains the time stamp
+                    dateTimeStamp = datetime.datetime.strptime(str(dataSlice,'ascii'),'%Y-%jT%H:%M:%S.%f')  #The time stamp is converted from DOY format to a datetime object
+                    dateStamp = str(dateTimeStamp.date())   #A string of the day date to be used as the main organizational key in the data dictionary
+                    time = dateTimeStamp.time() #The time in hours to microseconds for the row
+                    timeStamp = time.hour + time.minute/60 + time.second/3600   #Convert the time to decimal hours
+
+                    if dateStamp in self.dataDict:  #Check if a entry for the date already exists in the data dictionary
+                        pass
+                    else:
+                        self.dataDict[dateStamp] = {}
+                        
+                    if dateTimeStamp > self.endTime:    #If the desired end date has been passed the function ends
+                            f.close()   
+                            return 
+                    
+                    if 'TIME_ARRAY' not in self.dataDict[dateStamp]:
+                            self.dataDict[dateStamp]['TIME_ARRAY'] = []
+                    self.dataDict[dateStamp]['TIME_ARRAY'].append(timeStamp)   #Array to hold time stamps is created and the decimal hour time is appended to it
+
+                    if 'DATETIME_ARRAY' not in self.dataDict[dateStamp]:
+                        self.dataDict[dateStamp]['DATETIME_ARRAY'] = []
+                    self.dataDict[dateStamp]['DATETIME_ARRAY'].append(str(dateTimeStamp))   #Array to hold time stamps is created and the decimal hour time is appended to it
+                            
+                    dataObjectData = label.dataNameDict['DATA'] #Label data for the data is found 
+                    startByte = dataObjectData['START_BYTE']
+                    endByte = dataObjectData['END_BYTE']
+                    dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
+                    temp = struct.unpack(dataObjectData['FORMAT']*dataObjectData['DIM1']*dataObjectData['DIM2'],dataSlice) #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
+                    temp = np.asarray(temp).reshape(dataObjectData['DIM1'],dataObjectData['DIM2'])  #The data is put into a matrix of the size defined in the label
+                    dataArray = [np.mean(row) for row in temp]  #Each rows average is found to have one column 
+
+                    if 'DATA_ARRAY' not in self.dataDict[dateStamp]:
+                        self.dataDict[dateStamp]['DATA_ARRAY'] = []
+                    
+                    self.dataDict[dateStamp]['DATA_ARRAY'].append(dataArray) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
+
+
 #-------------------------------------------------------------------------------------------------------------------------------------------------     
 class FGMData():
     """A class for reading singular csv files and getting data for Bx, By, and Bz.\n

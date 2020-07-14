@@ -221,7 +221,23 @@ def electronTest():
     jade = JadeData(datFiles,timeStart,timeEnd)
     jade.getElecData()
 
+    for date in ISO:
+        jadeElecData = jade.dataDict[date]
 
+        fig,ax = plt.subplots()
+
+        spec = ax.imshow(np.transpose(jadeElecData['DATA_ARRAY']),origin='lower',aspect='auto',cmap='jet')
+
+        axins = inset_axes(ax,
+                   width="2%",  # width = 5% of parent_bbox width
+                   height="100%",  # height : 50%
+                   loc='center right',
+                   bbox_to_anchor=(0.04, 0, 1, 1),
+                   bbox_transform=ax.transAxes,
+                   borderpad=0,
+                   )
+        cbr = plt.colorbar(spec,cax=axins)
+    plt.show()
 if __name__ == '__main__':
     
     electronTest()
