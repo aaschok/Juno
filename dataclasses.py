@@ -210,7 +210,7 @@ class JadeData():
                     if 'DATA_ARRAY' not in self.dataDict[dateStamp]:
                         self.dataDict[dateStamp]['DATA_ARRAY'] = []
                     
-                    self.dataDict[dateStamp]['DATA_ARRAY'].append(dataArray) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
+                    self.dataDict[dateStamp]['DATA_ARRAY'].append(np.log(dataArray)) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------     
