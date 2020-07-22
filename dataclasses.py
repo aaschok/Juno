@@ -54,7 +54,7 @@ class PDS3Label():
     returns a dictionary """
     def __init__(self,labelFile):
         self.label = labelFile
-        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA','SC_POS_LAT','SC_POS_R'] #All the object names you want to find info on from the .lbl file
+        self.dataNames = ['DIM0_UTC','PACKET_SPECIES','DATA','DIM1_E','SC_POS_LAT','SC_POS_R'] #All the object names you want to find info on from the .lbl file
         self.dataNameDict = {} #Initialization of a dictionary that will index other dictionaries based on the data name
         self.getLabelData() #Automatically calls the function to get data from the label 
         
@@ -131,6 +131,17 @@ class JadeData():
                     endByte = speciesObjectData['END_BYTE']
                     dataSlice = data[startByte:endByte]
                     ionSpecies = struct.unpack(speciesObjectData['FORMAT']*speciesObjectData['DIM1'],dataSlice)[0] #Species type for the row is found
+
+                    dataObjectData = label.dataNameDict['DIM1_E'] #Label data for the data is found 
+                    startByte = dataObjectData['START_BYTE']
+                    endByte = dataObjectData['END_BYTE']
+                    dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
+                    temp = struct.unpack(dataObjectData['FORMAT']*dataObjectData['DIM1']*dataObjectData['DIM2'],dataSlice) #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
+                    temp = np.asarray(temp).reshape(dataObjectData['DIM1'],dataObjectData['DIM2'])  #The data is put into a matrix of the size defined in the label
+                    dataArray = [row[0] for row in temp]  #Each rows average is found to have one column 
+
+                    if 'DIM1_ARRAY' not in self.dataDict[dateStamp]:
+                        self.dataDict[dateStamp]['DIM1_ARRAY'] = dataArray
 
                     if ionSpecies == species:   #If the species for the row is the desired species continue finding data
                         
@@ -212,6 +223,19 @@ class JadeData():
                     
                     self.dataDict[dateStamp]['DATA_ARRAY'].append(np.log(dataArray)) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
 
+                    dataObjectData = label.dataNameDict['DIM1_E'] #Label data for the data is found 
+                    startByte = dataObjectData['START_BYTE']
+                    endByte = dataObjectData['END_BYTE']
+                    dataSlice = data[startByte:endByte] #Slice containing the data for that row is gotten
+                    temp = struct.unpack(dataObjectData['FORMAT']*dataObjectData['DIM1']*dataObjectData['DIM2'],dataSlice) #The binary format of the data is multiplied by the dimensions to allow unpacking of all data at once
+                    temp = np.asarray(temp).reshape(dataObjectData['DIM1'],dataObjectData['DIM2'])  #The data is put into a matrix of the size defined in the label
+                    dataArray = [row[0] for row in temp]  #Each rows average is found to have one column 
+
+
+                    if 'DIM1_ARRAY' not in self.dataDict[dateStamp]:
+                        self.dataDict[dateStamp]['DIM1_ARRAY'] = dataArray
+
+                    
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------     
 class FGMData():

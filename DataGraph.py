@@ -5,7 +5,9 @@ from matplotlib import cm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import spiceypy as spice
 import pandas as pd
-import time
+from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
+                               AutoMinorLocator)
+import time,pprint
 
 def graph():
 
@@ -56,7 +58,23 @@ def graph():
                    borderpad=0,
                    )
                 cbr = plt.colorbar(spec,cax=axins)
-                cbr.set_label('log(Counts/sec)',rotation=270)
+                cbr.set_label('log(Counts/sec)',rotation=270, labelpad=10)
+                
+                dimData = np.array(jadeData['DIM1_ARRAY'])/1000
+                ticks = [0.1,1,10]
+                tickList = []
+                dataTicks = []
+                for ticknum in ticks:
+                    tick = min(range(len(dimData)), key=lambda j: abs(dimData[j]-ticknum))
+                    tickList.append(tick)
+                    dataTicks.append(dimData[tick])
+
+                ax1.set_yticks(tickList)
+                ax1.set_yticklabels(np.round(dataTicks,1)) 
+
+                ax1.set_ylabel('E(eV/q)')
+                ax1.yaxis.set_label_coords(-0.07,0.5)
+
 
                 if i == 1:
                     for num in range(0,7):
@@ -120,6 +138,7 @@ def graph():
                 ax2.set_xlabel('Hrs')
                 ax2.xaxis.set_label_coords(1.04,-0.053)
                 ax2.set_ylabel('|B| (nT)')
+                ax2.yaxis.set_label_coords(-0.07,0.5)
 
                 if len(latLabels) == 0 and len(distLabels) == 0:
                     if i == 1:
@@ -213,8 +232,8 @@ def getPos():
     print(f'{spiceTest.latitude} Degree Lat\n')
 
 def electronTest():
-    timeStart = '2017-03-09T00:00:00'
-    timeEnd = '2017-03-09T23:59:59'
+    timeStart = '2017-07-07T00:00:00'
+    timeEnd = '2017-07-07T23:59:59'
 
     dataFolder = pathlib.Path('../data/jad')
     DOY,ISO,datFiles = getFiles(timeStart,timeEnd,'.DAT',dataFolder,'JAD_L30_LRS_ELC_ANY_CNT') 
@@ -226,7 +245,7 @@ def electronTest():
 
         fig,ax = plt.subplots()
 
-        spec = ax.imshow(np.transpose(jadeElecData['DATA_ARRAY']),origin='lower',aspect='auto',cmap='jet')
+        spec = ax.imshow(np.transpose(jadeElecData['DATA_ARRAY']),origin='lower',aspect='auto',cmap='jet',extent=(0,24,0,64))
 
         axins = inset_axes(ax,
                    width="2%",  # width = 5% of parent_bbox width
@@ -237,10 +256,24 @@ def electronTest():
                    borderpad=0,
                    )
         cbr = plt.colorbar(spec,cax=axins)
+
+        dimData = np.array(jadeElecData['DIM1_ARRAY'])/1000
+        ticks = [0.1,1,10]
+        tickList = []
+        dataTicks = []
+        for i in ticks:
+            tick = min(range(len(dimData)), key=lambda j: abs(dimData[j]-i))
+            tickList.append(tick)
+            dataTicks.append(dimData[tick])
+
+        ax.set_yticks(tickList)
+        ax.set_yticklabels(np.round(dataTicks,1)) 
+
+        ax.set_ylabel('E(keV)')
     plt.show()
 if __name__ == '__main__':
     
-    electronTest()
+    graph()
 
 
             
