@@ -37,6 +37,34 @@ KPL/MK
 
                        '$KERNELS/fk/juno_v12.tf'
 
+		       '$KERNELS/spk/juno_rec_110805_111026_120302.bsp'
+		       '$KERNELS/spk/juno_rec_111026_120308_120726.bsp'
+		       '$KERNELS/spk/juno_rec_120308_120825_121109.bsp'
+		       '$KERNELS/spk/juno_rec_120825_130515_130708.bsp'
+		       '$KERNELS/spk/juno_rec_130515_131005_151210.bsp'
+		       '$KERNELS/spk/juno_rec_131005_131014_131101.bsp'
+		       '$KERNELS/spk/juno_rec_131014_131114_140222.bsp'
+		       '$KERNELS/spk/juno_rec_131114_140918_141208.bsp'
+		       '$KERNELS/spk/juno_rec_140903_151003_160118.bsp'
+		       '$KERNELS/spk/juno_rec_151003_160312_160418.bsp'
+		       '$KERNELS/spk/juno_rec_160312_160522_160614.bsp'
+		       '$KERNELS/spk/juno_rec_160522_160729_160909.bsp'
+		       '$KERNELS/spk/juno_rec_160729_160923_161027.bsp'
+		       '$KERNELS/spk/juno_rec_160923_161115_161121.bsp'
+                       '$KERNELS/spk/juno_rec_161115_170106_170113.bsp'
+                       '$KERNELS/spk/juno_rec_170106_170228_170307.bsp'
+                       '$KERNELS/spk/juno_rec_170228_170422_170427.bsp'
+                       '$KERNELS/spk/juno_rec_170422_170608_170621.bsp'
+                       '$KERNELS/spk/juno_rec_170608_170728_170803.bsp'
+                       '$KERNELS/spk/juno_rec_170728_170918_170922.bsp'
+                       '$KERNELS/spk/juno_rec_170918_171121_171127.bsp'
+                       '$KERNELS/spk/juno_rec_171121_180113_180117.bsp'
+                       '$KERNELS/spk/juno_rec_180113_180307_180312.bsp'
+                       '$KERNELS/spk/juno_rec_180307_180429_180504.bsp'
+                       '$KERNELS/spk/juno_rec_180429_180621_180626.bsp'
+                       '$KERNELS/spk/juno_rec_180620_180812_180821.bsp'
+                       '$KERNELS/spk/juno_rec_180812_181004_181011.bsp'
+                       '$KERNELS/spk/juno_rec_181004_181126_181205.bsp'
                        '$KERNELS/spk/juno_rec_181126_190118_190124.bsp'
                        '$KERNELS/spk/juno_rec_190118_190312_190319.bsp'
                        '$KERNELS/spk/juno_rec_190312_190504_190509.bsp'
@@ -45,7 +73,6 @@ KPL/MK
                        '$KERNELS/spk/juno_rec_190817_191010_191022.bsp'
                        '$KERNELS/spk/juno_rec_170106_170228_170307.bsp'
                        '$KERNELS/spk/juno_rec_170228_170422_170427.bsp'
-
                         )
 
    \begintext
