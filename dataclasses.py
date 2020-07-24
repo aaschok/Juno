@@ -9,7 +9,7 @@ import spiceypy as spice
 
 
 def getFiles(startTime, endTime, fileType, dataFolder, instrument):
-    """Function whitch finds all files that have your specified parameters in their name.\n
+    """Function which finds all files that have your specified parameters in their name.\n
         Start time must be in UTC e.g. '2017-03-09T00:00:00.000'.\n
         End time must be in UTC e.g. '2017-03-09T00:00:00.000'.\n
         Filetype must be string preceding period is optional.\n
@@ -221,8 +221,6 @@ class JadeData():
                     if 'DATA_ARRAY' not in self.dataDict[dateStamp]:
                         self.dataDict[dateStamp]['DATA_ARRAY'] = []
                     
-                    self.dataDict[dateStamp]['DATA_ARRAY'].append(np.log(dataArray)) #The log of the data column is taken and appended to the data dictionary under the key DATA_ARRAY
-
                     dataObjectData = label.dataNameDict['DIM1_E'] #Label data for the data is found 
                     startByte = dataObjectData['START_BYTE']
                     endByte = dataObjectData['END_BYTE']
