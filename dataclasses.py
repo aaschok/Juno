@@ -237,7 +237,6 @@ class JadeData():
                         self.dataDict[dateStamp]['DIM1_ARRAY'] = dataArray
 
                     
-
 #-------------------------------------------------------------------------------------------------------------------------------------------------     
 class FGMData():
     """A class for reading singular csv files and getting data for Bx, By, and Bz.\n

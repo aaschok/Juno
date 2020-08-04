@@ -138,13 +138,13 @@ def finalGraph():   #This is the final graph function I use
 
                 qEndIndex = min(range(len(qData['QTIME_ARRAY'])), key=lambda j: abs(qData['QTIME_ARRAY'][j]-i*6))
 
-                timeloop = qData['QTIME_ARRAY'][qStart:qEndIndex+1]                                         #extracts time from time array to fit within 6 hr window
+                timeloop = qData['QTIME_ARRAY'][qStart:qEndIndex+1]                                       #extracts time from time array to fit within 6 hr window
+                timeplot = np.linspace((i-1)*6,i*6,len(timeloop))
                 qloop = qData['Q_ARRAY'][qStart:qEndIndex+1]                                         #extracts q from q array to correspond to the time
                 
-            
-                ax3.plot(timeloop,qloop,'b')
-                #for k in range(len(qloop)-1):
-                #    ax3.plot((timeloop[k],timeloop[k+1]),(qloop[k],qloop[k]),'b')   #loop used to produce seperate horizontal lines for each value q         
+                #ax3.plot(timeplot,qloop,'b')
+                for k in range(len(qloop)-1):
+                    ax3.plot((timeplot[k],timeplot[k+1]),(qloop[k],qloop[k]),'b')   #loop used to produce seperate horizontal lines for each value q         
                 
                 ax3.set_yscale('log')
                 ax3.set_ylabel('[W/$m^2$]')
@@ -264,31 +264,31 @@ def testFunc():
     dataFolder = pathlib.Path('../data/fgm')
     DOY,ISO,csvFiles = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm_jno_l3') 
     q = turbulence(ISO,csvFiles,timeStart,timeEnd,1,60,1800,'.')
-    fig,ax3=plt.subplots()
-
+    
     for date in ISO:
         qStart = 0
         for i in range(1,5):
+            fig,ax3=plt.subplots()
             qData = q.dataDict[date]
 
             qEndIndex = min(range(len(qData['QTIME_ARRAY'])), key=lambda j: abs(qData['QTIME_ARRAY'][j]-i*6))
 
-            timeloop = qData['QTIME_ARRAY'][qStart:qEndIndex+1]                                         #extracts time from time array to fit within 6 hr window
-            qloop = qData['Q_ARRAY'][qStart:qEndIndex+1]                                         #extracts q from q array to correspond to the time
-                
-            print(f'Q:{qloop}')
-            print(f'Time: {timeloop}')
-            
-            ax3.plot(timeloop,qloop,'b')     
-                
+            timeloop = qData['QTIME_ARRAY'][qStart:qEndIndex+1]     #extracts time from time array to fit within 6 hr window
+            timeplot = np.linspace((i-1)*6,i*6,len(timeloop))
+            qloop = qData['Q_ARRAY'][qStart:qEndIndex+1]    #extracts q from q array to correspond to the time
+                          
+            #ax3.plot(test,qloop,'b')     
+            for k in range(len(qloop)-1):
+                    ax3.plot((timeplot[k],timeplot[k+1]),(qloop[k],qloop[k]),'b')   #loop used to produce seperate horizontal lines for each value q      
             ax3.set_yscale('log')
             ax3.set_ylabel('mean heating rate density [W/$m^2$]')
                 
             qStart = qEndIndex
     plt.show()
+
 if __name__ == '__main__':
     
-    testFunc()
+    finalGraph()
 
 
             
