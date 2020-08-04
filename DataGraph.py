@@ -92,7 +92,7 @@ def finalGraph():   #This is the final graph function I use
                 ax1.set_yticks(tickList)
                 ax1.set_yticklabels(np.round(dataTicks,1),fontsize=9)
 
-                ax1.set_ylabel('E(eV/q)')
+                ax1.set_ylabel('E (eV/q)',size=9)
                 ax1.yaxis.set_label_coords(-0.09,0.5)
                 
 
@@ -130,7 +130,7 @@ def finalGraph():   #This is the final graph function I use
                 ax2.set_yticks(tickList)
                 ax2.set_yticklabels(np.round(dataTicks,1),fontsize=9) 
 
-                ax2.set_ylabel('E(keV)')
+                ax2.set_ylabel('E (keV)',size=9)
                 ax2.yaxis.set_label_coords(-0.09,0.5)
 
             if date in q.dataDict.keys():   #Graphing heating rate Density
@@ -147,7 +147,7 @@ def finalGraph():   #This is the final graph function I use
                     ax3.plot((timeplot[k],timeplot[k+1]),(qloop[k],qloop[k]),'b')   #loop used to produce seperate horizontal lines for each value q         
                 
                 ax3.set_yscale('log')
-                ax3.set_ylabel('[W/$m^2$]')
+                ax3.set_ylabel('Heat Flux [W/$m^2$]',size=9)
                 ax3.yaxis.set_label_coords(-0.09,0.5)
                 ax3.tick_params(axis='y',labelsize=9)
                 
@@ -166,7 +166,7 @@ def finalGraph():   #This is the final graph function I use
                 ax4.legend(loc=(1.01,0.07),prop={'size': 9})
                 ax4.set_xlabel('Hrs')
                 ax4.xaxis.set_label_coords(1.04,-0.07)
-                ax4.set_ylabel('|B| (nT)')
+                ax4.set_ylabel('|B| (nT)',size=9)
                 ax4.yaxis.set_label_coords(-0.09,0.5)
                 ax4.tick_params(axis='y',labelsize=9)
 
