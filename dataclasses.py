@@ -314,7 +314,7 @@ def gyro(bx, by, bz, m, z, q):
 
 #------------------------------------------------------------------------------------
 
-def q(psd_perp,freq, bx, by, bz, b1, b2, m):
+def q(psd_perp,freq, bx, by, bz, b1, b2, m): 
     """Takes PSD of perpendicular component and other parameters to find q MHD 
     and q KAW.  \n Every parameter must be in base units (T, kg, m, etc).  \n Empirical
     parameters are subject to adjustment below.  \n Outputs ranges of q MHD and q KAW 

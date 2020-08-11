@@ -35,9 +35,9 @@ def finalGraph():   #This is the final graph function I use
     jadeIon = JadeData(datFiles,timeStart,timeEnd)
     jadeIon.getIonData()
 
-    dataFolder = pathlib.Path('../data/fgm')
-    DOY,ISO,csvFiles = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm_jno_l3') 
-    fgm = FGMData(csvFiles,timeStart,timeEnd)
+    #dataFolder = pathlib.Path('../data/fgm')
+    #DOY,ISO,csvFiles = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm_jno_l3') 
+    #fgm = FGMData(csvFiles,timeStart,timeEnd)
 
     dataFolder = pathlib.Path('../data/jad')
     DOY,ISO,datFiles = getFiles(timeStart,timeEnd,'.DAT',dataFolder,'JAD_L30_LRS_ELC_ANY_CNT') 
@@ -46,13 +46,12 @@ def finalGraph():   #This is the final graph function I use
 
     dataFolder = pathlib.Path('../data/fgm')
     DOY,ISO,csvFiles = getFiles(timeStart,timeEnd,'.csv',dataFolder,'fgm_jno_l3') 
-    q = turbulence(ISO,csvFiles,timeStart,timeEnd,1,60,1800,'.')
-
+    q = turbulence(ISO,csvFiles,timeStart,timeEnd,1,60,1800,'.') #Add the ability to pass velocities from the front end
+    
     metaKernel = 'juno_2019_v03.tm'
     spice.furnsh(metaKernel)
 
     for date in ISO:
-
         fgmStart = 0
         jadIonStart = 0
         jadElecStart = 0
@@ -61,6 +60,9 @@ def finalGraph():   #This is the final graph function I use
         for i in range(1,5):
             fig, (ax1,ax2,ax3,ax4) = plt.subplots(4,1,sharex=True)
             latLabels, distLabels = [],[]
+
+            if date not in jadeIon.dataDict.keys() and date not in q.dataDict.keys():
+                continue
 
             if date in jadeIon.dataDict.keys(): #Ion spectrogram portion
                 jadeIonData = jadeIon.dataDict[date]  
@@ -92,7 +94,7 @@ def finalGraph():   #This is the final graph function I use
                 ax1.set_yticks(tickList)
                 ax1.set_yticklabels(np.round(dataTicks,1),fontsize=9)
 
-                ax1.set_ylabel('E (eV/q)',size=9)
+                ax1.set_ylabel('E (keV/q)',size=9)
                 ax1.yaxis.set_label_coords(-0.09,0.5)
                 
 
@@ -150,19 +152,17 @@ def finalGraph():   #This is the final graph function I use
                 ax3.set_ylabel('Heat Flux [W/$m^2$]',size=9)
                 ax3.yaxis.set_label_coords(-0.09,0.5)
                 ax3.tick_params(axis='y',labelsize=9)
-                
+                ax3.set_ylim(10e-18,10e-12)
+
                 qStart = qEndIndex
-
-            if date in fgm.dataDict.keys():     #FGM graph portion
-                fgmData = fgm.dataDict[date]
                 
-                fgmIndex = min(range(len(fgmData['TIME_ARRAY'])), key=lambda j: abs(fgmData['TIME_ARRAY'][j]-i*6))
+                fgmEndIndex = min(range(len(qData['TIME_ARRAY'])), key=lambda j: abs(qData['TIME_ARRAY'][j]-i*6))
 
-                ax4.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['BX'][fgmStart:fgmIndex+1],label='$B_x$',linewidth=1)
-                ax4.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['BY'][fgmStart:fgmIndex+1],label='$B_y$',linewidth=1)
-                ax4.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['BZ'][fgmStart:fgmIndex+1],label='$B_z$',linewidth=1)
-                ax4.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],fgmData['B'][fgmStart:fgmIndex+1],'black',label='$^+_-|B|$',linewidth=0.5)
-                ax4.plot(fgmData['TIME_ARRAY'][fgmStart:fgmIndex+1],-np.array(fgmData['B'][fgmStart:fgmIndex+1]),'black',linewidth=0.5)
+                ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],qData['BX'][fgmStart:fgmEndIndex+1],label='$B_x$',linewidth=1)
+                ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],qData['BY'][fgmStart:fgmEndIndex+1],label='$B_y$',linewidth=1)
+                ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],qData['BZ'][fgmStart:fgmEndIndex+1],label='$B_z$',linewidth=1)
+                ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],qData['B'][fgmStart:fgmEndIndex+1],'black',label='$^+_-|B|$',linewidth=0.5)
+                ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],-np.array(qData['B'][fgmStart:fgmEndIndex+1]),'black',linewidth=0.5)
                 ax4.legend(loc=(1.01,0.07),prop={'size': 9})
                 ax4.set_xlabel('Hrs')
                 ax4.xaxis.set_label_coords(1.04,-0.07)
@@ -170,27 +170,27 @@ def finalGraph():   #This is the final graph function I use
                 ax4.yaxis.set_label_coords(-0.09,0.5)
                 ax4.tick_params(axis='y',labelsize=9)
 
-                fgmStart = fgmIndex
+                fgmStart = fgmEndIndex
 
-            if date in fgm.dataDict.keys(): #Positional labels portion
+            if date in q.dataDict.keys(): #Positional labels portion
                 if i == 1:
                     for num in range(0,7):
-                        lat, dist = getPosLabels(fgm.dataDict[date],num)
+                        lat, dist = getPosLabels(q.dataDict[date],num)
                         latLabels.append(lat)
                         distLabels.append(dist)                   
                 elif i == 2:
                     for num in range(6,13):
-                        lat, dist = getPosLabels(fgm.dataDict[date],num)
+                        lat, dist = getPosLabels(q.dataDict[date],num)
                         latLabels.append(lat)
                         distLabels.append(dist)                   
                 elif i == 3:
                     for num in range(12,19):
-                        lat, dist = getPosLabels(fgm.dataDict[date],num)
+                        lat, dist = getPosLabels(q.dataDict[date],num)
                         latLabels.append(lat)
                         distLabels.append(dist)
                 elif i == 4:
                     for num in range(18,25):
-                        lat, dist = getPosLabels(fgm.dataDict[date],num)
+                        lat, dist = getPosLabels(q.dataDict[date],num)
                         latLabels.append(lat)
                         distLabels.append(dist)
 
@@ -216,8 +216,6 @@ def finalGraph():   #This is the final graph function I use
                         latLabels.append(lat)
                         distLabels.append(dist)
 
-            if date not in jadeIon.dataDict.keys() and date not in fgm.dataDict.keys():
-                continue
 
             ax5 = ax4.twiny()
             ax6 = ax5.twiny()        
@@ -267,8 +265,9 @@ def testFunc():
     
     for date in ISO:
         qStart = 0
+        fgmStart = 0
         for i in range(1,5):
-            fig,ax3=plt.subplots()
+            fig,(ax4,ax3)=plt.subplots(2,1)
             qData = q.dataDict[date]
 
             qEndIndex = min(range(len(qData['QTIME_ARRAY'])), key=lambda j: abs(qData['QTIME_ARRAY'][j]-i*6))
@@ -283,6 +282,21 @@ def testFunc():
             ax3.set_yscale('log')
             ax3.set_ylabel('mean heating rate density [W/$m^2$]')
                 
+            fgmEndIndex = min(range(len(qData['TIME_ARRAY'])), key=lambda j: abs(qData['TIME_ARRAY'][j]-i*6))
+            
+            ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],qData['BX'][fgmStart:fgmEndIndex+1],label='$B_x$',linewidth=1)
+            ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],qData['BY'][fgmStart:fgmEndIndex+1],label='$B_y$',linewidth=1)
+            ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],qData['BZ'][fgmStart:fgmEndIndex+1],label='$B_z$',linewidth=1)
+            ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],qData['B'][fgmStart:fgmEndIndex+1],'black',label='$^+_-|B|$',linewidth=0.5)
+            ax4.plot(qData['TIME_ARRAY'][fgmStart:fgmEndIndex+1],-np.array(qData['B'][fgmStart:fgmEndIndex+1]),'black',linewidth=0.5)
+            ax4.legend(loc=(1.01,0.07),prop={'size': 9})
+            ax4.set_xlabel('Hrs')
+            ax4.xaxis.set_label_coords(1.04,-0.07)
+            ax4.set_ylabel('|B| (nT)',size=9)
+            ax4.yaxis.set_label_coords(-0.09,0.5)
+            ax4.tick_params(axis='y',labelsize=9)
+
+            fgmStart = fgmEndIndex
             qStart = qEndIndex
     plt.show()
 
