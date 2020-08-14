@@ -149,7 +149,7 @@ def finalGraph():   #This is the final graph function I use
                     ax3.plot((timeplot[k],timeplot[k+1]),(qloop[k],qloop[k]),'b')   #loop used to produce seperate horizontal lines for each value q         
                 
                 ax3.set_yscale('log')
-                ax3.set_ylabel('Heat Flux [W/$m^2$]',size=9)
+                ax3.set_ylabel('Q [W/$m^2$]',size=9)
                 ax3.yaxis.set_label_coords(-0.09,0.5)
                 ax3.tick_params(axis='y',labelsize=9)
                 ax3.set_ylim(10e-18,10e-12)
