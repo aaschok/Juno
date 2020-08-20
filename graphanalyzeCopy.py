@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import sys, os, pathlib, datetime, pyautogui, keyboard, mouse, pandas
+import sys, os, pathlib, datetime, pyautogui, keyboard, mouse, time, subprocess
 import numpy as np
 import matplotlib.pyplot as plt
-
-
+import tkinter as tk
+from PIL import Image,ImageTk
 
 def analyze():    
         
@@ -25,39 +25,49 @@ def analyze():
     time_list_18 = [i + 6 for i in time_list_12]
     time_list_24 = [i + 6 for i in time_list_18]
     
-    plt.ion()
-    plt.show()
-    plt.figure(figsize=(15,6))
-    #plt.get_current_fig_manager().full_screen_toggle()
-    img = plt.imread(pic_paths[pic_num])
-    plt.imshow(img)
-    plt.axis('off')
-    plt.show()
-    plt.pause(0.05)
+    p = subprocess.Popen(["C:\Program Files\Honeyview\Honeyview.exe",pic_paths[pic_num]])
     
     print('please specify graph area')
     print('leftmost x-axis portion')
     mouse.wait('left')
-
+    
     pos = pyautogui.position()
     graph_area = [pos.x]
-    plt.pause(0.05)
+    
+    time.sleep(.5)
 
     print('rightmost x-axis portion')
     mouse.wait('left')
     pos = pyautogui.position()
     graph_area.append(pos.x)
-    plt.pause(0.05)
+    
+    time.sleep(.1)
 
     print('Graph area defined')
     while True:
         #Sheath to Sphere using nums?
 
         if keyboard.is_pressed('esc'):
+            p.kill()
             break
         
         if keyboard.is_pressed('q'):
-            print('select new graph area')
+            print('Select new graph area')
+
+            print('leftmost x-axis portion')
+            mouse.wait('left')
+            pos = pyautogui.position()
+            graph_area = [pos.x]
+            
+            time.sleep(.5)
+
+            print('rightmost x-axis portion')
+            mouse.wait('left')
+            pos = pyautogui.position()
+            graph_area.append(pos.x)
+            time.sleep(.1)
+
+            print('Graph area defined')
 
         if mouse.is_pressed('left'):
             win = pyautogui.getActiveWindow()
@@ -67,25 +77,19 @@ def analyze():
             if mouse_pos.x >= graph_area[1] and mouse_pos.x <= win.left+win.width:
                 print('Next image')
                 pic_num += 1
-
-                plt.cla()
-                plt.axis('off')
-                img = plt.imread(pic_paths[pic_num])
-                plt.imshow(img)
-                plt.pause(0.05)
+                p.kill()
+                p = subprocess.Popen(["C:\Program Files\Honeyview\Honeyview.exe",pic_paths[pic_num]])
+                time.sleep(0.5)
 
             elif mouse_pos.x >= win.left and mouse_pos.x <= graph_area[0]:
                 print('Previous image')
                 pic_num -= 1
+                p.kill()
+                p = subprocess.Popen(["C:\Program Files\Honeyview\Honeyview.exe",pic_paths[pic_num]])
+                time.sleep(0.5)
 
-                plt.cla()
-                plt.axis('off') 
-                img = plt.imread(pic_paths[pic_num])
-                plt.imshow(img)
-                plt.pause(0.05)
-
-            elif mouse_pos.x >= graph_area[0] and mouse_pos.x <= graph_area[1]:
-                print('Would you like to record this point as a crossing? Press 1 for yes and 2 for no ')
+            if mouse_pos.x >= graph_area[0] and mouse_pos.x <= graph_area[1]:
+                print('Would you like to record this point as a crossing? Press 1 for yes and 2 for no')
 
                 while True:
                     if keyboard.is_pressed('1'):
@@ -99,7 +103,7 @@ def analyze():
                 
                 if record: pass
                 elif not record: continue
-                plt.pause(0.05)
+                time.sleep(0.05)
 
                 mouse_rel_pos = (mouse_pos.x - graph_area[0])/graph_len
                 date_time_stamp = datetime.datetime.strptime(pic_paths[pic_num][-16:-4],'%Y%j_%H%M')
@@ -124,8 +128,7 @@ def analyze():
                     elif keyboard.is_pressed('2'):
                         record_type = 'Magnetosphere'
                         break
-                plt.pause(0.05)
-
+                
                 temp_hr = int(graph_time_stamp)
                 temp_min = int((graph_time_stamp * 60) % 60)
                 temp_sec = int((graph_time_stamp * 3600) % 60)
@@ -138,8 +141,8 @@ def analyze():
                     crossing.writelines(f'\n{record_date} ,{record_time} ,{record_type}')
                 crossing.close()
                 print('Continue analyzing images')
-                plt.pause(0.05)
-            plt.paus(0.05)
+                
+      
     
 
 
