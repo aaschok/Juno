@@ -1,18 +1,36 @@
 #!/usr/bin/env python3
 
-import sys, os, pathlib, datetime, pyautogui, keyboard, mouse, pandas
+import sys, os, pathlib, datetime, pyautogui, keyboard, mouse, time, subprocess
 import numpy as np
 import matplotlib.pyplot as plt
-
-
+import tkinter as tk
+from PIL import Image,ImageTk
 
 def analyze():    
         
-    pic_folder = pathlib.Path('../figures/orbit6')
+    pic_folder = pathlib.Path('../figures/combinedorbit2')
     pics = os.listdir(pic_folder)
     pic_paths = [os.path.join(pic_folder,pic) for pic in pics] 
-    pic_num = 0
-
+    
+    pic_date_format = int(input('What is the format for the date in the pictures?\n 1 - "Year-DOYTHour", 2 - "YearDOY_HourMinute"\n '))
+    naming_format = {1:{'size':[-15,-4],'format':'%Y-%jT%H'},2:{'size':[-16,-4],'format':'%Y%j_%H%M'}}
+    date_format_index = naming_format[pic_date_format]['size']
+    date_strip_format = naming_format[pic_date_format]['format']
+                
+    start_date = str(input('What date(Y-M-DTH) would you like to start with?\nTo start from the beginning picture press Enter - '))
+    
+    if start_date == '':
+        pic_num = 0
+    else:
+        start_date_doy = datetime.datetime.strptime(start_date,'%Y-%m-%dT%H')
+        print(start_date_doy)
+        for num,pic in enumerate(pic_paths):
+            if datetime.datetime.strptime(pic[date_format_index[0]:date_format_index[1]],date_strip_format) == start_date_doy:
+                pic_num = num
+                print(num)
+                break
+    
+    
     time_list = []
     pos_list = [0]
     for i in range(0,21600+1):
@@ -25,39 +43,49 @@ def analyze():
     time_list_18 = [i + 6 for i in time_list_12]
     time_list_24 = [i + 6 for i in time_list_18]
     
-    plt.ion()
-    plt.show()
-    plt.figure(figsize=(15,6))
-    #plt.get_current_fig_manager().full_screen_toggle()
-    img = plt.imread(pic_paths[pic_num])
-    plt.imshow(img)
-    plt.axis('off')
-    plt.show()
-    plt.pause(0.05)
+    p = subprocess.Popen(["C:\Program Files\Honeyview\Honeyview.exe",pic_paths[pic_num]])
     
     print('please specify graph area')
     print('leftmost x-axis portion')
     mouse.wait('left')
-
+    
     pos = pyautogui.position()
     graph_area = [pos.x]
-    plt.pause(0.05)
+    
+    time.sleep(.5)
 
     print('rightmost x-axis portion')
     mouse.wait('left')
     pos = pyautogui.position()
     graph_area.append(pos.x)
-    plt.pause(0.05)
+    
+    time.sleep(.4)
 
     print('Graph area defined')
     while True:
         #Sheath to Sphere using nums?
 
         if keyboard.is_pressed('esc'):
+            p.kill()
             break
         
-        if keyboard.is_pressed('q'):
-            print('select new graph area')
+        if keyboard.is_pressed('3'):
+            print('Select new graph area')
+
+            print('leftmost x-axis portion')
+            mouse.wait('left')
+            pos = pyautogui.position()
+            graph_area = [pos.x]
+            
+            time.sleep(.5)
+
+            print('rightmost x-axis portion')
+            mouse.wait('left')
+            pos = pyautogui.position()
+            graph_area.append(pos.x)
+            time.sleep(.1)
+
+            print('Graph area defined')
 
         if mouse.is_pressed('left'):
             win = pyautogui.getActiveWindow()
@@ -67,25 +95,19 @@ def analyze():
             if mouse_pos.x >= graph_area[1] and mouse_pos.x <= win.left+win.width:
                 print('Next image')
                 pic_num += 1
-
-                plt.cla()
-                plt.axis('off')
-                img = plt.imread(pic_paths[pic_num])
-                plt.imshow(img)
-                plt.pause(0.05)
+                p.kill()
+                p = subprocess.Popen(["C:\Program Files\Honeyview\Honeyview.exe",pic_paths[pic_num]])
+                time.sleep(0.5)
 
             elif mouse_pos.x >= win.left and mouse_pos.x <= graph_area[0]:
                 print('Previous image')
                 pic_num -= 1
+                p.kill()
+                p = subprocess.Popen(["C:\Program Files\Honeyview\Honeyview.exe",pic_paths[pic_num]])
+                time.sleep(0.5)
 
-                plt.cla()
-                plt.axis('off') 
-                img = plt.imread(pic_paths[pic_num])
-                plt.imshow(img)
-                plt.pause(0.05)
-
-            elif mouse_pos.x >= graph_area[0] and mouse_pos.x <= graph_area[1]:
-                print('Would you like to record this point as a crossing? Press 1 for yes and 2 for no ')
+            if mouse_pos.x >= graph_area[0] and mouse_pos.x <= graph_area[1]:
+                print('Would you like to record this point as a crossing? Press 1 for yes and 2 for no')
 
                 while True:
                     if keyboard.is_pressed('1'):
@@ -99,12 +121,13 @@ def analyze():
                 
                 if record: pass
                 elif not record: continue
-                plt.pause(0.05)
+                time.sleep(0.6)
 
                 mouse_rel_pos = (mouse_pos.x - graph_area[0])/graph_len
-                date_time_stamp = datetime.datetime.strptime(pic_paths[pic_num][-16:-4],'%Y%j_%H%M')
+                
+                date_time_stamp = datetime.datetime.strptime(pic_paths[pic_num][date_format_index[0]:date_format_index[1]],date_strip_format)
                 record_date = date_time_stamp.date()
-                print(record_date)
+                
                 closest_pos = min(range(len(pos_list)), key=lambda j: abs(pos_list[j]-mouse_rel_pos))
                 
                 if date_time_stamp.hour == 0:
@@ -124,8 +147,7 @@ def analyze():
                     elif keyboard.is_pressed('2'):
                         record_type = 'Magnetosphere'
                         break
-                plt.pause(0.05)
-
+                
                 temp_hr = int(graph_time_stamp)
                 temp_min = int((graph_time_stamp * 60) % 60)
                 temp_sec = int((graph_time_stamp * 3600) % 60)
@@ -138,8 +160,8 @@ def analyze():
                     crossing.writelines(f'\n{record_date} ,{record_time} ,{record_type}')
                 crossing.close()
                 print('Continue analyzing images')
-                plt.pause(0.05)
-            plt.paus(0.05)
+                
+      
     
 
 
