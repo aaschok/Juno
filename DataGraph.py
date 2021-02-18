@@ -247,6 +247,8 @@ def finalGraph():   #This is the final graph function I use
             plt.close(fig)
         print(f'Graphs for {date} created')
 
+
+
 def testFunc():
 
     timeStart = '2017-03-09T00:00:00'

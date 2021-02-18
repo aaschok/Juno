@@ -157,7 +157,7 @@ def analyze():
                 print(f'{record_type} crossing at {record_date} {record_time} recorded.')
                 
                 with open('jno_crossings.dat','a') as crossing:
-                    crossing.writelines(f'\n{record_date} ,{record_time} ,{record_type}')
+                    crossing.writelines(f'\n{record_date},{record_time},{record_type}')
                 crossing.close()
                 print('Continue analyzing images')
                 

@@ -290,14 +290,15 @@ class SpiceData():
         self.distance = None
         self.latitude = None
         self.longitude = None
+        self.positionData()
 
     def positionData(self):
         spice.furnsh(self.meta) #loads the meta kernel that will load all kernels needed
 
         time = spice.utc2et(self.time)
-
+        
         self.position, lighttime = spice.spkpos('JUNO',time,'IAU_JUPITER','NONE','JUPITER') #Finds the position in cartesian coords relative to jupiter
-    
+        
         pos = spice.vpack(self.position[0],self.position[1],self.position[2])   #Packs the position into a vector
         self.distance,self.longitude,self.latitude = spice.reclat(pos) #Finds radial dist, latitide and longitude
         self.latitude *= spice.dpr()
