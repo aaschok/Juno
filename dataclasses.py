@@ -256,29 +256,30 @@ class FGMData():
         for dataFile in self.dataFileList:
             data = pd.read_csv(dataFile)    #Using pandas module the csv is read
             
-            dateTimeStamp = data['SAMPLE UTC']
+            dateTimeStampList = data['SAMPLE UTC']
                 
-            for row,stamp in enumerate(dateTimeStamp): #For each time stamp the day date is found and decimal hour is found
+            for row,stamp in enumerate(dateTimeStampList): #For each time stamp the day date is found and decimal hour is found
                 
                 dateTimeStamp = datetime.datetime.fromisoformat(stamp)
-                date = str(dateTimeStamp.date())
-                time = datetime.datetime.fromisoformat(stamp).time()
-                time = time.hour + time.minute/60 + time.second/3600
+                if dateTimeStamp >= self.startTime and dateTimeStamp <= self.endTime:
+                    date = str(dateTimeStamp.date())
+                    time = datetime.datetime.fromisoformat(stamp).time()
+                    time = time.hour + time.minute/60 + time.second/3600
 
-                magXData = data['BX PLANETOCENTRIC'][row]
-                magYData = data['BY PLANETOCENTRIC'][row]
-                magZData = data['BZ PLANETOCENTRIC'][row]
-                magTot = np.sqrt(magXData**2+magYData**2+magZData**2)
+                    magXData = data['BX PLANETOCENTRIC'][row]
+                    magYData = data['BY PLANETOCENTRIC'][row]
+                    magZData = data['BZ PLANETOCENTRIC'][row]
+                    magTot = np.sqrt(magXData**2+magYData**2+magZData**2)
                 
-                if date not in self.dataDict:   #If a key entry for the day doesnt exist one is created
-                    self.dataDict[date] = {'DATETIME_ARRAY':[],'TIME_ARRAY':[], 'BX':[], 'BY':[], 'BZ':[], 'B':[]}
+                    if date not in self.dataDict:   #If a key entry for the day doesnt exist one is created
+                        self.dataDict[date] = {'DATETIME_ARRAY':[],'TIME_ARRAY':[], 'BX':[], 'BY':[], 'BZ':[], 'B':[]}
 
-                self.dataDict[date]['DATETIME_ARRAY'].append(dateTimeStamp)
-                self.dataDict[date]['TIME_ARRAY'].append(time)  #Time stamp for each time in the day is added to the array
-                self.dataDict[date]['BX'].append(magXData)    #Full Bx data array is added to the dictionary
-                self.dataDict[date]['BY'].append(magYData)    #Full By data array is added to the dictionary
-                self.dataDict[date]['BZ'].append(magZData)    #Full Bz data array is added to the dictionary
-                self.dataDict[date]['B'].append(magTot) #Full B data array is added to the dictionary
+                    self.dataDict[date]['DATETIME_ARRAY'].append(dateTimeStamp)
+                    self.dataDict[date]['TIME_ARRAY'].append(time)  #Time stamp for each time in the day is added to the array
+                    self.dataDict[date]['BX'].append(magXData)    #Full Bx data array is added to the dictionary
+                    self.dataDict[date]['BY'].append(magYData)    #Full By data array is added to the dictionary
+                    self.dataDict[date]['BZ'].append(magZData)    #Full Bz data array is added to the dictionary
+                    self.dataDict[date]['B'].append(magTot) #Full B data array is added to the dictionary
             
 #-------------------------------------------------------------------------------------------------------------------------------------------------        
 class SpiceData():
