@@ -1,10 +1,11 @@
 import numpy as np 
 import pandas as pd
-import os,datetime,logging,pathlib,struct
+import os,datetime,logging,pathlib,struct,re
 import matplotlib.pyplot as plt
 import spiceypy as spice
 from scipy import signal
 from sklearn.linear_model import LinearRegression
+
 
 # logging.basicConfig(filename=pathlib.Path('..\\logs\\datagraph.log'),filemode='w',level=logging.DEBUG) #Creates a log file to show any outputs uncomment to use
 
@@ -25,22 +26,19 @@ def getFiles(startTime, endTime, fileType, dataFolder, instrument):
 
     dateRangeISOTemp = np.arange(datetime.datetime.fromisoformat(startTime).date(),(datetime.datetime.fromisoformat(endTime)+datetime.timedelta(days=1)).date()).astype(datetime.date) #Range of dates in the datetime.date format
     dateRangeISO = [datetime.date.isoformat(x) for x in dateRangeISOTemp] #Range of dates in string format 'Y-M-D'
-    
-    dateRangeDOY = [] #Range of dates in string 'YearDayofyear' format
-    for date in dateRangeISOTemp: 
-            dateDOY = date.strftime('%Y%j')
-            dateRangeDOY = np.append(dateRangeDOY,dateDOY)   
-    dateRangeDOY = np.sort(dateRangeDOY)  
-
+    dateRangeDOY = [i.strftime('%Y%j') for i in dateRangeISOTemp] #Range of dates in string 'YearDayofyear' format 
+    dateRangeDOY = np.sort(dateRangeDOY) 
+    p = re.compile(r'\d{7}')
     filePathList = []
     fileNameList = []
-    for (parentDir,childDirs,files) in os.walk(dataFolder): #Using os.walk each directory within the given data directory is combed through searching for files that match the criteria
-        for i,fileName in enumerate(files):
-            for j,date in enumerate(dateRangeDOY):
-                if fileName.endswith(fileType) and date in fileName and fileName not in fileNameList and fileName[:len(instrument)] == instrument:
-                    fileNameList = np.append(fileNameList,fileName) #List of all filenames is created to cheack and ensure the same file is not selected twice
-                    filePathList = np.append(filePathList,os.path.join(parentDir, fileName))    #The path to the correct file is saved in a list 
-
+    for parent,child,files in os.walk(dataFolder):
+            for file_name in files:
+                if file_name.endswith(fileType):
+                    file_path = os.path.join(parent,file_name)
+                    file_date = p.search(file_name).group()
+                    if file_date in dateRangeDOY and instrument in file_name:
+                        filePathList = np.append(filePathList,file_path)
+                 
     temp = []
     for i,j in enumerate(dateRangeDOY):
         for k in filePathList:
@@ -98,7 +96,7 @@ class JadeData():
         self.dataDict = {}
         
 
-    def getIonData(self):
+    def getIonData(self):   
         for dataFile in self.dataFileList:
             labelPath = dataFile.rstrip('.DAT') + '.LBL'    #All .dat files should come with an accompanying .lbl file
             label = PDS3Label(labelPath)    #The label file is parsed for the data needed
@@ -152,7 +150,7 @@ class JadeData():
 
                         if 'DATETIME_ARRAY' not in self.dataDict[dateStamp]:
                             self.dataDict[dateStamp]['DATETIME_ARRAY'] = []
-                        self.dataDict[dateStamp]['DATETIME_ARRAY'].append(str(dateTimeStamp))   #Array to hold time stamps is created and the decimal hour time is appended to it
+                        self.dataDict[dateStamp]['DATETIME_ARRAY'].append(dateTimeStamp.strftime('%Y-%m-%dT%H:%M:%S'))   #Array to hold time stamps is created and the decimal hour time is appended to it
                             
                         dataObjectData = label.dataNameDict['DATA'] #Label data for the data is found 
                         startByte = dataObjectData['START_BYTE']
@@ -291,15 +289,14 @@ class SpiceData():
         self.distance = None
         self.latitude = None
         self.longitude = None
-        self.positionData()
 
     def positionData(self):
-        spice.furnsh(self.meta) #loads the meta kernel that will load all kernels needed
+       # spice.furnsh(self.meta) #loads the meta kernel that will load all kernels needed
 
         time = spice.utc2et(self.time)
-        
+
         self.position, lighttime = spice.spkpos('JUNO',time,'IAU_JUPITER','NONE','JUPITER') #Finds the position in cartesian coords relative to jupiter
-        
+    
         pos = spice.vpack(self.position[0],self.position[1],self.position[2])   #Packs the position into a vector
         self.distance,self.longitude,self.latitude = spice.reclat(pos) #Finds radial dist, latitide and longitude
         self.latitude *= spice.dpr()
